@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">JBComic</string>
+    <string name="drawer_item_home">Home</string>
 </resources>
