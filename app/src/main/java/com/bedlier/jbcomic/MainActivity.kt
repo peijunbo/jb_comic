@@ -12,14 +12,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
+import com.bedlier.jbcomic.ui.ImageViewModel
+import com.bedlier.jbcomic.ui.NavViewModel
 import com.bedlier.jbcomic.ui.navigation.NavContainer
 import com.bedlier.jbcomic.ui.theme.JBComicTheme
 
 class MainActivity : ComponentActivity() {
-    private val mainViewModel: MainViewModel by viewModels()
+    companion object {
+        private const val TAG = "MainActivity"
+    }
+
+    private val navViewModel: NavViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MyApplication.currentActivity = this
+        navViewModel.navController = NavHostController(this)
         setContent {
             JBComicTheme {
                 // A surface container using the 'background' color from the theme
