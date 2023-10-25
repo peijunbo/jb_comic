@@ -1,6 +1,5 @@
-package com.bedlier.jbcomic.ui
+package com.bedlier.jbcomic.ui.viewmodels
 
-import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,7 +12,6 @@ import com.hjq.permissions.XXPermissions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.text.DateFormat
-import java.time.ZoneId
 import java.util.Date
 
 class ImageViewModel : ViewModel() {

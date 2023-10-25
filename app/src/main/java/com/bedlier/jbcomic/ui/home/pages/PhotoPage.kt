@@ -26,12 +26,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bedlier.jbcomic.R
-import com.bedlier.jbcomic.ui.ImageViewModel
+import com.bedlier.jbcomic.ui.viewmodels.ImageViewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import java.text.DateFormat
-import java.text.SimpleDateFormat
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun PhotoPage(

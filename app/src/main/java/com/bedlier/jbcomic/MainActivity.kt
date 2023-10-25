@@ -12,8 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
-import com.bedlier.jbcomic.ui.ImageViewModel
-import com.bedlier.jbcomic.ui.NavViewModel
+import com.bedlier.jbcomic.ui.viewmodels.NavViewModel
 import com.bedlier.jbcomic.ui.navigation.NavContainer
 import com.bedlier.jbcomic.ui.theme.JBComicTheme
 
