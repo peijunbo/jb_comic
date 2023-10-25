@@ -43,10 +43,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.Dialog
 import com.bedlier.jbcomic.R
 import com.bedlier.jbcomic.ui.home.pages.AlbumPage
+import com.bedlier.jbcomic.ui.home.pages.PhotoPage
 import com.bedlier.jbcomic.ui.home.pages.QueuePage
 import com.bedlier.jbcomic.ui.home.pages.StoragePage
 import com.bedlier.jbcomic.ui.theme.ElevationTokens
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 private const val TAG = "HomeScreen"
 
@@ -56,7 +58,7 @@ fun HomeScreen(
     onOpenDrawer: () -> Unit = {},
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(pageCount = { 3 })
+    val pagerState = rememberPagerState(pageCount = { Page.entries.size })
     // false stand for group by album, true stand for group by date
     val groupByDate by remember { mutableStateOf(false) }
     Scaffold(
@@ -80,19 +82,17 @@ fun HomeScreen(
                         Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Menu")
                     }
                     DropdownMenu(
-                        expanded = expanded, onDismissRequest = { expanded = false}
+                        expanded = expanded, onDismissRequest = { expanded = false }
                     ) {
                         DropdownMenuItem(
                             text = {
                                 Text(
                                     text = stringResource(
-                                        id = R.string.menu_photos_group_by, stringResource(
-                                            id = R.string.menu_photos_group_by_date
-                                        )
+                                        id = R.string.menu_photos_group_by
                                     )
                                 )
                             },
-                            trailingIcon = {Icons.Default.Sort},
+                            trailingIcon = { Icons.Default.Sort },
                             onClick = { /*TODO*/ }
                         )
                     }
@@ -103,7 +103,11 @@ fun HomeScreen(
             HomeBottomBar(pagerState = pagerState, onSelect = {
                 if (pagerState.currentPage != it) {
                     coroutineScope.launch {
-                        pagerState.animateScrollToPage(it)
+                        if (abs(pagerState.currentPage - it) == 1) {
+                            pagerState.animateScrollToPage(it)
+                        } else {
+                            pagerState.scrollToPage(it)
+                        }
                     }
                 }
             })
@@ -123,7 +127,8 @@ fun HomeContent(
 ) {
     HorizontalPager(
         state = pagerState,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        beyondBoundsPageCount = 3
     ) { page: Int ->
         Box(
             modifier = Modifier
@@ -131,11 +136,15 @@ fun HomeContent(
             contentAlignment = Alignment.Center
         ) {
             when (page) {
+                Page.Photo.ordinal -> {
+                    PhotoPage()
+                }
+
                 Page.Queue.ordinal -> {
                     QueuePage()
                 }
 
-                Page.Photos.ordinal -> {
+                Page.Album.ordinal -> {
                     AlbumPage()
                 }
 
@@ -179,24 +188,6 @@ fun GroupDialog(
     Dialog(
         onDismissRequest = onDismissRequest,
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column {
-                Text(text = stringResource(id = R.string.menu_photos_group_by), fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.CenterHorizontally))
-                Row {
-                    Text(text = stringResource(id = R.string.menu_photos_group_by_album))
-                    RadioButton(selected = groupBy.value, onClick = { groupBy.value = true })
-                    Text(text = stringResource(id = R.string.menu_photos_group_by_date))
-                    RadioButton(selected = !groupBy.value, onClick = { groupBy.value = false })
-                }
-                Row {
-                    TextButton(onClick = onDismissRequest) {
-                        Text(text = stringResource(id = R.string.button_confirm))
-                    }
-                }
-            }
-        }
+
     }
 }

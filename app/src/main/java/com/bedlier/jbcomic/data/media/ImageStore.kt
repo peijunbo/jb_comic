@@ -23,7 +23,8 @@ class ImageStore {
                 MediaStore.Images.Media.DISPLAY_NAME,
                 MediaStore.Images.Media.BUCKET_ID,
                 MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
-                MediaStore.Images.Media.DATE_ADDED
+                MediaStore.Images.Media.DATE_ADDED,
+                MediaStore.Images.Media.DATE_MODIFIED
             )
             val query = MyApplication.context.contentResolver.query(
                 collection,
@@ -49,14 +50,16 @@ class ImageStore {
                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                         id
                     )
-
+                    val dateAdded = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED))
+                    val dateModified = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_MODIFIED))
                     images += MediaImage(
-                        id = id.toInt(),
+                        id = id,
                         name = name,
                         uri = contentUri,
                         bucketId = bucketId,
                         bucketName = bucketName,
-                        dateAdded = 0
+                        dateAdded = dateAdded,
+                        dateModified = dateModified
                     )
                 }
             }

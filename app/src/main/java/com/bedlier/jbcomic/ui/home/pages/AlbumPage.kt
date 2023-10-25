@@ -2,20 +2,15 @@ package com.bedlier.jbcomic.ui.home.pages
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,7 +29,6 @@ import com.bedlier.jbcomic.R
 import com.bedlier.jbcomic.ui.ImageViewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.hjq.permissions.OnPermissionCallback
 
 @Composable
 fun AlbumPage(
@@ -96,7 +90,7 @@ fun AlbumPageContent(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         modifier = Modifier.fillMaxSize()
     ) {
-        imageViewModel.imageListByBucket.entries.forEach { (bucketId, images) ->
+        imageViewModel.albums.entries.forEach { (bucketId, images) ->
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Text(images[0].bucketName)
             }

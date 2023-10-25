@@ -5,13 +5,16 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bedlier.jbcomic.MyApplication
-import com.bedlier.jbcomic.data.media.MediaImage
 import com.bedlier.jbcomic.data.media.ImageStore
+import com.bedlier.jbcomic.data.media.MediaImage
 import com.hjq.permissions.OnPermissionCallback
 import com.hjq.permissions.Permission
 import com.hjq.permissions.XXPermissions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.text.DateFormat
+import java.time.ZoneId
+import java.util.Date
 
 class ImageViewModel : ViewModel() {
     companion object {
@@ -19,13 +22,22 @@ class ImageViewModel : ViewModel() {
     }
 
     val imageList = mutableStateListOf<MediaImage>()
-    val imageListByBucket
+    val albums
         get() = imageList.groupBy { it.bucketId }
+
+    val imagesGroupByDate
+        get() = imageList.groupBy {
+            // group by date
+            DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(it.dateModified * 1000))
+        }
     fun loadImageStore() {
         viewModelScope.launch(Dispatchers.IO) {
-            imageList.clear()
-            imageList.addAll(ImageStore.getMediaImages())
-            Log.d(TAG, "loadImageStore: ${imageList.toList()}")
+            val images = ImageStore.getMediaImages()
+            // compare, if not equal, update the whole list
+            if (images != imageList) {
+                imageList.clear()
+                imageList.addAll(images)
+            }
         }
     }
 
