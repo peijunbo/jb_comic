@@ -1,6 +1,7 @@
-package com.bedlier.jbcomic.ui.viewmodels
+package com.bedlier.jbcomic.ui.home
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bedlier.jbcomic.MyApplication
@@ -23,11 +24,14 @@ class ImageViewModel : ViewModel() {
     val albums
         get() = imageList.groupBy { it.bucketId }
 
+    var albumSortState = mutableStateOf(AlbumSortState())
+
     val imagesGroupByDate
         get() = imageList.groupBy {
             // group by date
             DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(it.dateModified * 1000))
         }
+
     fun loadImageStore() {
         viewModelScope.launch(Dispatchers.IO) {
             val images = ImageStore.getMediaImages()
@@ -53,3 +57,19 @@ class ImageViewModel : ViewModel() {
         }
     }
 }
+
+enum class SortMethod {
+    NAME, SIZE, DATE
+}
+
+/**
+ * Album sort state
+ *
+ * @param order true: asc, false: desc
+ * @param sortMethod sort method [SortMethod]
+ */
+data class AlbumSortState(
+    val order: Boolean = false,
+    val sortMethod: SortMethod = SortMethod.NAME
+)
+

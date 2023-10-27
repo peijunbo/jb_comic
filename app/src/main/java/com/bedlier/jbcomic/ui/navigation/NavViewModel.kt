@@ -1,4 +1,4 @@
-package com.bedlier.jbcomic.ui.viewmodels
+package com.bedlier.jbcomic.ui.navigation
 
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavHostController

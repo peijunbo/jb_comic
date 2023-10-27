@@ -41,11 +41,14 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bedlier.jbcomic.R
 import com.bedlier.jbcomic.ui.home.pages.AlbumPage
 import com.bedlier.jbcomic.ui.home.pages.PhotoPage
 import com.bedlier.jbcomic.ui.home.pages.QueuePage
 import com.bedlier.jbcomic.ui.home.pages.StoragePage
+import com.bedlier.jbcomic.ui.home.widgets.AlbumDialog
+import com.bedlier.jbcomic.ui.home.widgets.AlbumPageMenu
 import com.bedlier.jbcomic.ui.theme.ElevationTokens
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -56,11 +59,21 @@ private const val TAG = "HomeScreen"
 @Composable
 fun HomeScreen(
     onOpenDrawer: () -> Unit = {},
+    imageViewModel: ImageViewModel = viewModel()
 ) {
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { Page.entries.size })
     // false stand for group by album, true stand for group by date
     val groupByDate by remember { mutableStateOf(false) }
+    var showAlbumDialog by remember { mutableStateOf(false) }
+    if (showAlbumDialog) {
+        AlbumDialog(currentState = imageViewModel.albumSortState.value, onDismissRequest = {
+            showAlbumDialog = false
+        }, onConfirm = { state ->
+            imageViewModel.albumSortState.value = state
+            showAlbumDialog = false
+        })
+    }
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -77,24 +90,12 @@ fun HomeScreen(
                     }
                 },
                 actions = {
-                    var expanded by remember { mutableStateOf(false) }
-                    IconButton(onClick = { expanded = true }) {
-                        Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Menu")
-                    }
-                    DropdownMenu(
-                        expanded = expanded, onDismissRequest = { expanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = stringResource(
-                                        id = R.string.menu_photos_group_by
-                                    )
-                                )
-                            },
-                            trailingIcon = { Icons.Default.Sort },
-                            onClick = { /*TODO*/ }
-                        )
+                    when (pagerState.currentPage) {
+                        Page.Album.ordinal -> AlbumPageMenu(onOpenDialog = {
+                            showAlbumDialog = true
+                        })
+
+                        else -> {}
                     }
                 }
             )
@@ -172,22 +173,5 @@ fun HomeBottomBar(
                 onClick = { onSelect(index) }
             )
         }
-    }
-}
-
-/**
- * Group by bucket or date dialog
- * @param groupBy group by bucket or date, false stand for group by album, true stand for group by date
- * @param onDismissRequest callback when dialog dismiss
- */
-@Composable
-fun GroupDialog(
-    groupBy: MutableState<Boolean>,
-    onDismissRequest: () -> Unit = {},
-) {
-    Dialog(
-        onDismissRequest = onDismissRequest,
-    ) {
-
     }
 }
