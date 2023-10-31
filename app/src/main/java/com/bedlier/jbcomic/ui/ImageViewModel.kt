@@ -1,4 +1,4 @@
-package com.bedlier.jbcomic.ui.home
+package com.bedlier.jbcomic.ui
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.util.Date
+import java.util.Objects
 
 class ImageViewModel : ViewModel() {
     companion object {
@@ -22,9 +23,9 @@ class ImageViewModel : ViewModel() {
 
     val imageList = mutableStateListOf<MediaImage>()
     val albums
-        get() = imageList.groupBy { it.bucketId }
+        get() = imageList.groupSortedBy(albumSortState.value)
 
-    var albumSortState = mutableStateOf(AlbumSortState())
+    var albumSortState = mutableStateOf(AlbumSortMethod())
 
     val imagesGroupByDate
         get() = imageList.groupBy {
@@ -61,15 +62,58 @@ class ImageViewModel : ViewModel() {
 enum class SortMethod {
     NAME, SIZE, DATE
 }
-
 /**
  * Album sort state
  *
  * @param order true: asc, false: desc
  * @param sortMethod sort method [SortMethod]
  */
-data class AlbumSortState(
+data class AlbumSortMethod(
     val order: Boolean = false,
     val sortMethod: SortMethod = SortMethod.NAME
 )
 
+fun List<MediaImage>.groupSortedBy(albumSortMethod: AlbumSortMethod): Map<String, List<MediaImage>> {
+    val albums = this.groupBy { it.bucketName }
+    return when (albumSortMethod.sortMethod) {
+        SortMethod.NAME -> {
+            if (albumSortMethod.order) {
+                albums.toSortedMap()
+            } else {
+                albums.toSortedMap(reverseOrder())
+            }
+        }
+
+        SortMethod.DATE -> {
+            if (albumSortMethod.order) {
+                albums.toSortedMap { name1, name2 ->
+                    val date1 = albums[name1]?.maxBy { it.dateModified }?.dateModified ?: 0
+                    val date2 = albums[name2]?.maxBy { it.dateModified }?.dateModified ?: 0
+                    date1.compareTo(date2)
+                }
+            } else {
+                albums.toSortedMap() { name1, name2 ->
+                    val date1 = albums[name1]?.maxBy { it.dateModified }?.dateModified ?: 0
+                    val date2 = albums[name2]?.maxBy { it.dateModified }?.dateModified ?: 0
+                    date2.compareTo(date1)
+                }
+            }
+        }
+
+        SortMethod.SIZE -> {
+            if (albumSortMethod.order) {
+                albums.toSortedMap { name1, name2 ->
+                    val size1 = albums[name1]?.size ?: 0
+                    val size2 = albums[name2]?.size ?: 0
+                    size1.compareTo(size2)
+                }
+            } else {
+                albums.toSortedMap { name1, name2 ->
+                    val size1 = albums[name1]?.size ?: 0
+                    val size2 = albums[name2]?.size ?: 0
+                    size2.compareTo(size1)
+                }
+            }
+        }
+    }
+}

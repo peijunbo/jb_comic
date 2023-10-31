@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bedlier.jbcomic.R
 import com.bedlier.jbcomic.data.media.MediaImage
-import com.bedlier.jbcomic.ui.home.ImageViewModel
+import com.bedlier.jbcomic.ui.ImageViewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 
@@ -82,7 +82,7 @@ fun AlbumPage(
 fun AlbumPageContent(
     imageViewModel: ImageViewModel = viewModel()
 ) {
-    if (imageViewModel.imageList.isEmpty()) {
+    if (imageViewModel.albums.isEmpty()) {
         Text(text = "No Image")
         return
     }
