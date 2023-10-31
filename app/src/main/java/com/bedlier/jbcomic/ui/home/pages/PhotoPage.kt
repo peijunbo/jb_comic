@@ -1,5 +1,6 @@
 package com.bedlier.jbcomic.ui.home.pages
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
@@ -22,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -41,8 +43,9 @@ fun PhotoPage(
         }
         PhotoPageContent()
     } else {
+        val activity = LocalContext.current as Activity
         LaunchedEffect(key1 = Unit) {
-            imageViewModel.requestPermission { _: MutableList<String>, allGranted: Boolean ->
+            imageViewModel.requestPermission(activity = activity) { _: MutableList<String>, allGranted: Boolean ->
                 if (allGranted) {
                     imageViewModel.loadImageStore()
                     permissionGranted = true
@@ -53,9 +56,12 @@ fun PhotoPage(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = stringResource(id = R.string.message_no_permission))
+            val activity = LocalContext.current as Activity
             Button(
                 onClick = {
-                    imageViewModel.requestPermission { _: MutableList<String>, allGranted: Boolean ->
+                    imageViewModel.requestPermission(
+                        activity = activity
+                    ) { _: MutableList<String>, allGranted: Boolean ->
                         if (allGranted) {
                             imageViewModel.loadImageStore()
                             permissionGranted = true
@@ -90,7 +96,7 @@ fun PhotoPageContent(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         modifier = Modifier.fillMaxSize()
     ) {
-        imageViewModel.imagesGroupByDate.entries.forEach {(date, images) ->
+        imageViewModel.imagesGroupByDate.entries.forEach { (date, images) ->
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Text(text = date)
             }

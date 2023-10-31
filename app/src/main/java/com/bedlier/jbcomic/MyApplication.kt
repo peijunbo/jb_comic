@@ -11,8 +11,6 @@ class MyApplication: Application() {
         lateinit var context: Context
             private set
 
-        var currentActivity: Activity? = null
-
     }
     override fun onCreate() {
         super.onCreate()

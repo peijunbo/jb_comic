@@ -24,7 +24,6 @@ class MainActivity : ComponentActivity() {
     private val navViewModel: NavViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        MyApplication.currentActivity = this
         navViewModel.navController = NavHostController(this)
         setContent {
             JBComicTheme {

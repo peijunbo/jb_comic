@@ -1,5 +1,6 @@
 package com.bedlier.jbcomic.ui.home.pages
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -44,8 +46,9 @@ fun AlbumPage(
         }
         AlbumPageContent()
     } else {
+        val activity = LocalContext.current as Activity
         LaunchedEffect(key1 = Unit) {
-            imageViewModel.requestPermission { _: MutableList<String>, allGranted: Boolean ->
+            imageViewModel.requestPermission(activity = activity) { _: MutableList<String>, allGranted: Boolean ->
                 if (allGranted) {
                     imageViewModel.loadImageStore()
                     permissionGranted = true
@@ -56,9 +59,10 @@ fun AlbumPage(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = stringResource(id = R.string.message_no_permission))
+            val activity = LocalContext.current as Activity
             Button(
                 onClick = {
-                    imageViewModel.requestPermission { _: MutableList<String>, allGranted: Boolean ->
+                    imageViewModel.requestPermission(activity = activity) { _: MutableList<String>, allGranted: Boolean ->
                         if (allGranted) {
                             imageViewModel.loadImageStore()
                             permissionGranted = true

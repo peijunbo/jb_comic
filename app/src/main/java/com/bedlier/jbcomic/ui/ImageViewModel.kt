@@ -1,5 +1,6 @@
 package com.bedlier.jbcomic.ui
 
+import android.app.Activity
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -49,19 +50,21 @@ class ImageViewModel : ViewModel() {
         Permission.READ_MEDIA_IMAGES
     )
 
-    fun requestPermission(onPermissionCallback: OnPermissionCallback = OnPermissionCallback { _, _ -> Unit }) {
-        MyApplication.currentActivity?.let { activity ->
-            XXPermissions
-                .with(activity)
-                .permission(Permission.READ_MEDIA_IMAGES)
-                .request(onPermissionCallback)
-        }
+    fun requestPermission(
+        activity: Activity,
+        onPermissionCallback: OnPermissionCallback = OnPermissionCallback { _, _ -> Unit }
+    ) {
+        XXPermissions
+            .with(activity)
+            .permission(Permission.READ_MEDIA_IMAGES)
+            .request(onPermissionCallback)
     }
 }
 
 enum class SortMethod {
     NAME, SIZE, DATE
 }
+
 /**
  * Album sort state
  *
