@@ -1,6 +1,7 @@
 package com.bedlier.jbcomic.ui
 
 import android.app.Activity
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -15,7 +16,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.util.Date
-import java.util.Objects
 
 class ImageViewModel : ViewModel() {
     companion object {
@@ -25,8 +25,9 @@ class ImageViewModel : ViewModel() {
     val imageList = mutableStateListOf<MediaImage>()
     val albums
         get() = imageList.groupSortedBy(albumSortState.value)
-
     var albumSortState = mutableStateOf(AlbumSortMethod())
+
+    val viewQueue = mutableStateListOf<MediaImage>()
 
     val imagesGroupByDate
         get() = imageList.groupBy {
@@ -34,9 +35,18 @@ class ImageViewModel : ViewModel() {
             DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(it.dateModified * 1000))
         }
 
-    fun loadImageStore() {
+    fun requestImageStore() {
+        if (imageList.size > 0) {
+            return
+        } else {
+            loadImageStore()
+        }
+    }
+
+    private fun loadImageStore() {
         viewModelScope.launch(Dispatchers.IO) {
             val images = ImageStore.getMediaImages()
+            Log.d(TAG, "loadImageStore: load once")
             // compare, if not equal, update the whole list
             if (images != imageList) {
                 imageList.clear()
@@ -59,6 +69,8 @@ class ImageViewModel : ViewModel() {
             .permission(Permission.READ_MEDIA_IMAGES)
             .request(onPermissionCallback)
     }
+
+
 }
 
 enum class SortMethod {

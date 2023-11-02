@@ -41,7 +41,6 @@ class ImageStore {
                 val bucketNameColumn =
                     cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_DISPLAY_NAME)
                 while (cursor.moveToNext()) {
-                    Log.d("ImageStore", "getMediaImages: ")
                     val id = cursor.getLong(idColumn)
                     val name = cursor.getString(nameColumn)
                     val bucketId = cursor.getLong(bucketIdColumn)

@@ -3,7 +3,9 @@ package com.bedlier.jbcomic.ui.theme
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -80,3 +82,22 @@ object ElevationTokens {
     val Level4 = 8.0.dp
     val Level5 = 12.0.dp
 }
+
+val Shapes = Shapes(
+    extraLarge = RoundedCornerShape(20.dp)
+)
+
+object IconButtonStyle {
+    val Small = 24.dp
+    val Medium = 32.dp
+    val Large = 40.dp
+    val ExtraLarge = 56.dp
+
+    object IconSize {
+        val Small = 16.dp
+        val Medium = 24.dp
+        val Large = 32.dp
+        val ExtraLarge = 36.dp
+    }
+}
+

@@ -3,6 +3,7 @@
     <string name="nav_destination_home">Home</string>
     <string name="nav_destination_settings">Setting</string>
     <string name="nav_destination_about">About</string>
+    <string name="nav_destination_viewer">Viewer</string>
     <string name="message_no_permission">No permission to access storage</string>
     <string name="action_request_permission">Grant</string>
     <string name="menu_album_sort">Sort</string>

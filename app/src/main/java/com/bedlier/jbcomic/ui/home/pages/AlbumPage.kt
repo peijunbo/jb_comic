@@ -1,6 +1,7 @@
 package com.bedlier.jbcomic.ui.home.pages
 
 import android.app.Activity
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +33,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bedlier.jbcomic.R
 import com.bedlier.jbcomic.data.media.MediaImage
 import com.bedlier.jbcomic.ui.ImageViewModel
+import com.bedlier.jbcomic.ui.navigation.LocalNavController
+import com.bedlier.jbcomic.ui.navigation.Screen
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 
@@ -42,7 +45,7 @@ fun AlbumPage(
     var permissionGranted by remember { mutableStateOf(imageViewModel.checkPermission()) }
     if (permissionGranted) {
         LaunchedEffect(key1 = Unit) {
-            imageViewModel.loadImageStore()
+            imageViewModel.requestImageStore()
         }
         AlbumPageContent()
     } else {
@@ -50,7 +53,7 @@ fun AlbumPage(
         LaunchedEffect(key1 = Unit) {
             imageViewModel.requestPermission(activity = activity) { _: MutableList<String>, allGranted: Boolean ->
                 if (allGranted) {
-                    imageViewModel.loadImageStore()
+                    imageViewModel.requestImageStore()
                     permissionGranted = true
                 }
             }
@@ -64,7 +67,7 @@ fun AlbumPage(
                 onClick = {
                     imageViewModel.requestPermission(activity = activity) { _: MutableList<String>, allGranted: Boolean ->
                         if (allGranted) {
-                            imageViewModel.loadImageStore()
+                            imageViewModel.requestImageStore()
                             permissionGranted = true
                         }
                     }
@@ -90,6 +93,7 @@ fun AlbumPageContent(
         Text(text = "No Image")
         return
     }
+    val navController = LocalNavController.current
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -100,7 +104,10 @@ fun AlbumPageContent(
             item(
                 key = bucketId
             ) {
-                AlbumItem(images = images)
+
+                AlbumItem(images = images) {
+                    navController.navigate(Screen.Viewer.route)
+                }
             }
         }
     }
@@ -111,9 +118,11 @@ fun AlbumPageContent(
 @Composable
 fun AlbumItem(
     images: List<MediaImage>,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit = {}
 ) {
-    Box(modifier = modifier) {
+    Box(modifier = Modifier.clickable {
+        onClick()
+    }) {
         GlideImage(
             model = images[0].uri,
             contentDescription = images[0].name,

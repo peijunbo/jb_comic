@@ -17,11 +17,14 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
@@ -29,18 +32,23 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.bedlier.jbcomic.R
 import com.bedlier.jbcomic.ui.home.HomeScreen
+import com.bedlier.jbcomic.ui.viewer.ViewerScreen
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 val destinations = listOf(
     Screen.Home.route,
     Screen.Settings.route,
-    Screen.About.route
+    Screen.About.route,
+    Screen.Viewer.route
 )
+val LocalNavController = compositionLocalOf<NavHostController> {
+    error("No Nav Controller")
+}
 
 @Composable
 fun NavContainer() {
-    val navController = rememberNavController()
+    val navController = LocalNavController.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
     ModalNavigationDrawer(
@@ -97,6 +105,9 @@ fun NavContainer() {
             }
             composable(destinations[2]) {
                 Text(text = "About")
+            }
+            composable(destinations[3]) {
+                ViewerScreen()
             }
         }
     }
