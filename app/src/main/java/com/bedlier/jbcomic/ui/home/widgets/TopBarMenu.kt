@@ -1,7 +1,9 @@
 package com.bedlier.jbcomic.ui.home.widgets
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -17,10 +19,14 @@ import androidx.compose.ui.res.stringResource
 import com.bedlier.jbcomic.R
 
 @Composable
-fun AlbumPageMenu(
+fun RowScope.AlbumPageMenu(
     onOpenDialog: () -> Unit = {},
+    onRefresh: () -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
+    IconButton(onClick = onRefresh) {
+        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh")
+    }
     IconButton(onClick = { expanded = true }) {
         Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Menu")
     }
@@ -38,5 +44,14 @@ fun AlbumPageMenu(
             trailingIcon = { Icons.Default.Sort },
             onClick = onOpenDialog
         )
+    }
+}
+
+@Composable
+fun RowScope.PhotoPageMenu(
+    onRefresh: () -> Unit = {}
+) {
+    IconButton(onClick = onRefresh) {
+        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh")
     }
 }

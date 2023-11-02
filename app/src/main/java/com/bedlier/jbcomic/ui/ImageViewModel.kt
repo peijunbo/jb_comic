@@ -2,8 +2,10 @@ package com.bedlier.jbcomic.ui
 
 import android.app.Activity
 import android.util.Log
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bedlier.jbcomic.MyApplication
@@ -27,11 +29,12 @@ class ImageViewModel : ViewModel() {
     private val imageMutex = Mutex()
     val imageList
         get() = _imageList.toList()
+    var isImageLoading by mutableStateOf(false)
+        private set
 
     val albums
         get() = _imageList.groupSortedBy(albumSortState.value)
     var albumSortState = mutableStateOf(AlbumSortMethod())
-
     val viewQueue = mutableStateListOf<MediaImage>()
 
     val imagesGroupByDate
@@ -46,6 +49,7 @@ class ImageViewModel : ViewModel() {
             return
         }
         viewModelScope.launch(Dispatchers.IO) {
+            isImageLoading = true
             imageMutex.withLock {
             val images = ImageStore.getMediaImages()
                 // compare, if not equal, update the whole list
@@ -56,6 +60,7 @@ class ImageViewModel : ViewModel() {
                     _imageList.addAll(images)
                 }
             }
+            isImageLoading = false
         }
     }
 

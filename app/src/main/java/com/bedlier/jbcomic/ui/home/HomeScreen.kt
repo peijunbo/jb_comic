@@ -40,6 +40,7 @@ import com.bedlier.jbcomic.ui.home.pages.QueuePage
 import com.bedlier.jbcomic.ui.home.pages.StoragePage
 import com.bedlier.jbcomic.ui.home.widgets.AlbumDialog
 import com.bedlier.jbcomic.ui.home.widgets.AlbumPageMenu
+import com.bedlier.jbcomic.ui.home.widgets.PhotoPageMenu
 import com.bedlier.jbcomic.ui.theme.ElevationTokens
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -83,9 +84,20 @@ fun HomeScreen(
                 },
                 actions = {
                     when (pagerState.currentPage) {
-                        Page.Album.ordinal -> AlbumPageMenu(onOpenDialog = {
-                            showAlbumDialog = true
-                        })
+                        Page.Album.ordinal -> AlbumPageMenu(
+                            onOpenDialog = {
+                                showAlbumDialog = true
+                            },
+                            onRefresh = {
+                                imageViewModel.loadImageStore()
+                            }
+                        )
+
+                        Page.Photo.ordinal -> PhotoPageMenu(
+                            onRefresh = {
+                                imageViewModel.loadImageStore()
+                            }
+                        )
 
                         else -> {}
                     }
