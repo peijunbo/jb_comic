@@ -14,6 +14,8 @@ import com.hjq.permissions.Permission
 import com.hjq.permissions.XXPermissions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.text.DateFormat
 import java.util.Date
 
@@ -21,36 +23,38 @@ class ImageViewModel : ViewModel() {
     companion object {
         private const val TAG = "ImageViewModel"
     }
+    private val _imageList = mutableStateListOf<MediaImage>()
+    private val imageMutex = Mutex()
+    val imageList
+        get() = _imageList.toList()
 
-    val imageList = mutableStateListOf<MediaImage>()
     val albums
-        get() = imageList.groupSortedBy(albumSortState.value)
+        get() = _imageList.groupSortedBy(albumSortState.value)
     var albumSortState = mutableStateOf(AlbumSortMethod())
 
     val viewQueue = mutableStateListOf<MediaImage>()
 
     val imagesGroupByDate
-        get() = imageList.groupBy {
+        get() = _imageList.groupBy {
             // group by date
             DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(it.dateModified * 1000))
         }
 
-    fun requestImageStore() {
-        if (imageList.size > 0) {
+    fun loadImageStore() {
+        if (imageMutex.isLocked) { // already loading
+            Log.d(TAG, "loadImageStore: locked")
             return
-        } else {
-            loadImageStore()
         }
-    }
-
-    private fun loadImageStore() {
         viewModelScope.launch(Dispatchers.IO) {
+            imageMutex.withLock {
             val images = ImageStore.getMediaImages()
-            Log.d(TAG, "loadImageStore: load once")
-            // compare, if not equal, update the whole list
-            if (images != imageList) {
-                imageList.clear()
-                imageList.addAll(images)
+                // compare, if not equal, update the whole list
+                if (images != _imageList) {
+
+                    _imageList.clear()
+
+                    _imageList.addAll(images)
+                }
             }
         }
     }

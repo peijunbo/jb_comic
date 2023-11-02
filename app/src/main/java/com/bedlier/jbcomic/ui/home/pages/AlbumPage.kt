@@ -45,7 +45,7 @@ fun AlbumPage(
     var permissionGranted by remember { mutableStateOf(imageViewModel.checkPermission()) }
     if (permissionGranted) {
         LaunchedEffect(key1 = Unit) {
-            imageViewModel.requestImageStore()
+            imageViewModel.loadImageStore()
         }
         AlbumPageContent()
     } else {
@@ -53,7 +53,7 @@ fun AlbumPage(
         LaunchedEffect(key1 = Unit) {
             imageViewModel.requestPermission(activity = activity) { _: MutableList<String>, allGranted: Boolean ->
                 if (allGranted) {
-                    imageViewModel.requestImageStore()
+                    imageViewModel.loadImageStore()
                     permissionGranted = true
                 }
             }
@@ -67,7 +67,7 @@ fun AlbumPage(
                 onClick = {
                     imageViewModel.requestPermission(activity = activity) { _: MutableList<String>, allGranted: Boolean ->
                         if (allGranted) {
-                            imageViewModel.requestImageStore()
+                            imageViewModel.loadImageStore()
                             permissionGranted = true
                         }
                     }
