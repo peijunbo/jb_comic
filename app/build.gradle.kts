@@ -65,6 +65,8 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     // XXPermissions
     implementation("com.github.getActivity:XXPermissions:18.5")
+    // xlog
+    implementation("com.elvishew:xlog:1.10.1")
     // paging
     val pagingVersion = "3.2.1"
     implementation("androidx.paging:paging-runtime-ktx:$pagingVersion")

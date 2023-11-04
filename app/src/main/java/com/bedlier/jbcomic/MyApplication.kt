@@ -1,9 +1,12 @@
 package com.bedlier.jbcomic
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.Application
 import android.content.Context
+import com.elvishew.xlog.LogConfiguration
+import com.elvishew.xlog.LogLevel
+import com.elvishew.xlog.XLog
+import com.elvishew.xlog.printer.ConsolePrinter
 
 class MyApplication: Application() {
     companion object {
@@ -14,6 +17,12 @@ class MyApplication: Application() {
     }
     override fun onCreate() {
         super.onCreate()
+        val logConfiguration = LogConfiguration.Builder()
+            .logLevel(LogLevel.ALL)
+            .enableBorder()
+            .build()
+        XLog.init(logConfiguration)
+
         context = applicationContext
     }
 }
