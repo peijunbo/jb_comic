@@ -31,12 +31,14 @@ class ImageViewModel : ViewModel() {
         get() = _imageList.toList()
     var isImageLoading by mutableStateOf(false)
         private set
-
     val albums
         get() = _imageList.groupSortedBy(albumSortState.value)
     var albumSortState = mutableStateOf(AlbumSortMethod())
     val viewQueue = mutableStateListOf<MediaImage>()
-
+    val randomId = Math.random()
+    fun logRandom() {
+        Log.d(TAG, "logRandom: $randomId")
+    }
     val imagesGroupByDate
         get() = _imageList.groupBy {
             // group by date
@@ -50,13 +52,11 @@ class ImageViewModel : ViewModel() {
         }
         viewModelScope.launch(Dispatchers.IO) {
             isImageLoading = true
-            imageMutex.withLock {
             val images = ImageStore.getMediaImages()
+            imageMutex.withLock {
                 // compare, if not equal, update the whole list
                 if (images != _imageList) {
-
                     _imageList.clear()
-
                     _imageList.addAll(images)
                 }
             }

@@ -3,7 +3,6 @@ package com.bedlier.jbcomic.ui.navigation
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideIn
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowRight
 import androidx.compose.material.icons.filled.Error
@@ -18,29 +17,25 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
-import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.bedlier.jbcomic.R
 import com.bedlier.jbcomic.ui.home.HomeScreen
 import com.bedlier.jbcomic.ui.viewer.ViewerScreen
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
-val destinations = listOf(
+val drawerDestinations = listOf(
     Screen.Home.route,
     Screen.Settings.route,
-    Screen.About.route,
-    Screen.Viewer.route
+    Screen.About.route
 )
 val LocalNavController = compositionLocalOf<NavHostController> {
     error("No Nav Controller")
@@ -51,19 +46,21 @@ fun NavContainer() {
     val navController = LocalNavController.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
+    var enableDrawerGestures by remember{ mutableStateOf(false) }
     ModalNavigationDrawer(
         drawerState = drawerState,
+        gesturesEnabled = enableDrawerGestures,
         drawerContent = {
             ModalDrawerSheet {
-                destinations.forEach { route: String ->
+                drawerDestinations.forEach { route: String ->
                     NavigationDrawerItem(label = {
                         Text(text = route)
                     }, icon = {
                         Icon(
                             imageVector = when (route) {
-                                stringResource(id = R.string.nav_destination_home) -> Icons.Default.Home
-                                stringResource(id = R.string.nav_destination_settings) -> Icons.Default.Settings
-                                stringResource(id = R.string.nav_destination_about) -> Icons.Default.Error
+                                Screen.Home.route -> Icons.Default.Home
+                                Screen.Settings.route -> Icons.Default.Settings
+                                Screen.About.route -> Icons.Default.Error
                                 else -> Icons.Default.ArrowRight
                             },
                             contentDescription = route
@@ -84,7 +81,7 @@ fun NavContainer() {
     ) {
         NavHost(
             navController = navController,
-            startDestination = destinations[0],
+            startDestination = Screen.Home.route,
             enterTransition = {
                 slideIn(
                     animationSpec = tween(500),
@@ -94,22 +91,21 @@ fun NavContainer() {
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            composable(destinations[0]) {
+            composable(Screen.Home.route) {
                 HomeScreen(onOpenDrawer = {
                     coroutineScope.launch { drawerState.open() }
                 })
             }
-            composable(destinations[1]) {
-
+            composable(Screen.Settings.route) {
                 Text(text = "Settings")
             }
-            composable(destinations[2]) {
+            composable(Screen.About.route) {
                 Text(text = "About")
             }
-            composable(destinations[3]) {
+            composable(Screen.Viewer.route) {
                 ViewerScreen()
             }
         }
     }
-
+    
 }

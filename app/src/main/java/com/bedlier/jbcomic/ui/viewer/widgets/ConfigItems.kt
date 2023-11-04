@@ -50,9 +50,6 @@ fun ConfigToggleItem(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        IconButton(onClick = { /*TODO*/ }) {
-            
-        }
         FilledIconToggleButton(
             checked = checked,
             onCheckedChange = onCheckedChange,

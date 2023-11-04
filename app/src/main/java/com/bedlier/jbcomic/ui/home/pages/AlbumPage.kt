@@ -1,6 +1,7 @@
 package com.bedlier.jbcomic.ui.home.pages
 
 import android.app.Activity
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +39,7 @@ import com.bedlier.jbcomic.ui.navigation.Screen
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 
+private const val TAG = "AlbumPage"
 @Composable
 fun AlbumPage(
     imageViewModel: ImageViewModel = viewModel()
@@ -104,8 +106,12 @@ fun AlbumPageContent(
             item(
                 key = bucketId
             ) {
-
                 AlbumItem(images = images) {
+                    imageViewModel.viewQueue.clear()
+                    imageViewModel.viewQueue.addAll(images)
+                    imageViewModel.logRandom()
+                    Log.d(TAG, "AlbumPageContent: imageViewModel ${imageViewModel.hashCode()}")
+                    Log.d(TAG, "AlbumPageContent: addAll after ${imageViewModel.viewQueue.size}")
                     navController.navigate(Screen.Viewer.route)
                 }
             }
@@ -118,10 +124,11 @@ fun AlbumPageContent(
 @Composable
 fun AlbumItem(
     images: List<MediaImage>,
-    onClick: () -> Unit = {}
+    onClick: (bucketId: Long) -> Unit = {}
 ) {
     Box(modifier = Modifier.clickable {
-        onClick()
+        onClick(images[0].bucketId)
+        Log.d(TAG, "AlbumItem: onClick")
     }) {
         GlideImage(
             model = images[0].uri,
