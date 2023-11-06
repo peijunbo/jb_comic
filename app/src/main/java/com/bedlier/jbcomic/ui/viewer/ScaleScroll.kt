@@ -5,6 +5,7 @@ import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.gestures.ScrollableState
+import androidx.compose.foundation.gestures.TransformableState
 import androidx.compose.foundation.gestures.animatePanBy
 import androidx.compose.foundation.gestures.animateRotateBy
 import androidx.compose.foundation.gestures.animateScrollBy
@@ -24,6 +25,7 @@ import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.gestures.zoomBy
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.overscroll
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -36,25 +38,31 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.input.pointer.util.addPointerInputChange
+import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.unit.Velocity
 import com.elvishew.xlog.XLog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 fun Modifier.scalableScroll(
     state: ScrollableState,
     orientation: Orientation,
+    transformableState: TransformableState,
     enabled: Boolean = true,
     rotationEnabled: Boolean = false,
 ) = this.composed {
@@ -63,13 +71,14 @@ fun Modifier.scalableScroll(
     var offset by remember {
         mutableStateOf(Offset.Zero)
     }
-    val transformableState = rememberTransformableState { zoomChange, panChange, rotationChange ->
-        scale *= zoomChange
-        XLog.d("scalableScroll: detect scaleChange:$zoomChange, after scale:$scale")
-        offset += panChange
-    }
-    val flingBehavior =
-        rememberSnapFlingBehavior(lazyListState = state as LazyListState) as SnapFlingBehavior
+//    val transformableState = rememberTransformableState { zoomChange, panChange, rotationChange ->
+//        scale *= zoomChange
+//        XLog.d("scalableScroll: detect scaleChange:$zoomChange, after scale:$scale")
+//        offset += panChange
+//    }
+    val flingBehavior = ScrollableDefaults.flingBehavior()
+    val overscrollEffect = ScrollableDefaults.overscrollEffect()
+//        rememberSnapFlingBehavior(lazyListState = state as LazyListState) as SnapFlingBehavior
     val channel = remember { Channel<ScaleScrollEvent>(Channel.UNLIMITED) }
     if (enabled) {
         LaunchedEffect(state) {
@@ -94,9 +103,7 @@ fun Modifier.scalableScroll(
 
                             }
                             if (event.rotationChange != 0f) {
-
                                 transformableState.rotateBy(event.rotationChange)
-
                             }
                         }
 
@@ -107,19 +114,28 @@ fun Modifier.scalableScroll(
                                     else event.delta.x
                                 }"
                             )
-                            state.scrollBy(
-                                if (orientation == Orientation.Vertical) -event.delta.y
-                                else -event.delta.x,
-                            )
+                            val rest = state.scrollBy(-event.delta.y)
+                            if (!state.canScrollBackward || !state.canScrollForward) {
+                                overscrollEffect.applyToScroll(
+                                    Offset(0f, event.delta.y),
+                                    NestedScrollSource.Drag,
+                                ) {
+                                    Offset(0f, -rest)
+                                }
+                            }
+
                         }
 
                         is ScaleScrollEvent.ScaleScrollStopped -> {
                             state.scroll {
                                 with(flingBehavior) {
                                     flingJob = coroutineScope.launch {
-                                        performFling(
-                                            if (orientation == Orientation.Vertical) -event.velocity.y
-                                            else -event.velocity.x,
+                                        overscrollEffect.applyToFling(
+                                            if (orientation == Orientation.Vertical) event.velocity
+                                            else event.velocity,
+                                            performFling = {
+                                                -(it - Velocity(0f, performFling(-it.y)))
+                                            }
                                         )
                                     }
                                 }
@@ -163,6 +179,7 @@ fun Modifier.scalableScroll(
                                     }
                                 } else if (positionChanges.size == 1) {
                                     val pan = event.calculatePan()
+                                    channel.trySend(ScaleScrollEvent.ScaleDelta(1f, pan, 0f))
                                     velocityTracker.addPointerInputChange(event.changes.first())
                                     if (pan != Offset.Zero) {
                                         channel.trySend(ScaleScrollEvent.ScrollDelta(pan))
@@ -173,7 +190,11 @@ fun Modifier.scalableScroll(
                     } catch (e: CancellationException) {
                         if (!isActive) throw e
                     } finally {
-                        channel.trySend(ScaleScrollEvent.ScaleScrollStopped(velocityTracker.calculateVelocity()))
+                        channel.trySend(
+                            ScaleScrollEvent.ScaleScrollStopped(
+                                velocityTracker.calculateVelocity().copy(x = 0f)
+                            )
+                        )
                         velocityTracker.resetTracking()
                     }
                 }
@@ -182,7 +203,8 @@ fun Modifier.scalableScroll(
     }
     return@composed Modifier
         .pointerInput(channel, block = block)
-        .scale(scale)
+        .then(overscrollEffect.effectModifier)
+    //.scale(scale)
 }
 
 private sealed class ScaleScrollEvent {
@@ -190,6 +212,7 @@ private sealed class ScaleScrollEvent {
     data class ScaleScrollStopped(
         val velocity: Velocity
     ) : ScaleScrollEvent()
+
     data class ScrollDelta(
         val delta: Offset
     ) : ScaleScrollEvent()
