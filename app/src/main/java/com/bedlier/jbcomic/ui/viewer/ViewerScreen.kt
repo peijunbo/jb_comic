@@ -2,11 +2,13 @@ package com.bedlier.jbcomic.ui.viewer
 
 import android.util.Log
 import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
@@ -108,10 +110,7 @@ fun VerticalComicList(
         Log.d(TAG, "VerticalComicList: offset $offset")
     }
 
-    ScalableLazyColumn(
-//        scale = scale,
-//        offset = offset
-    ) {
+    ScalableLazyRow() {
         scalableItems(imageViewModel.viewQueue.size) {index: Int ->
             val image = imageViewModel.viewQueue[index]
             GlideImage(
@@ -119,60 +118,10 @@ fun VerticalComicList(
                 contentDescription = image.name,
                 loading = placeholder(R.drawable.ic_launcher_foreground),
                 modifier = Modifier
-                    .fillMaxSize()
-//                    .graphicsLayer {
-//                        scaleX = scale.floatValue
-//                        scaleY = scale.floatValue
-//                        translationX = offset.value.x
-//                    }
+                    .fillMaxHeight()
             )
         }
     }
-//    LazyColumn(
-//        userScrollEnabled = false,
-//        state = listState,
-//        contentPadding = PaddingValues(all = 16.dp),
-//        modifier = Modifier
-//            .scalableScroll(listState, Orientation.Vertical, transformableState),
-//    ) {
-//        items(imageViewModel.viewQueue.size) { index ->
-//            val image = imageViewModel.viewQueue[index]
-//            Layout(
-//                modifier = Modifier
-//                    .background(randomColor())
-//                    .padding(16.dp),
-//                content = {
-//                    GlideImage(
-//                        model = image.uri,
-//                        contentDescription = image.name,
-//                        loading = placeholder(R.drawable.ic_launcher_foreground),
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .graphicsLayer {
-//                                scaleX = scale
-//                                scaleY = scale
-//                                translationX = offsetX
-//
-//                            }
-//                    )
-//                },
-//            ) { measurables: List<Measurable>, constraints: Constraints ->
-//                val placeables = measurables.map { measurable ->
-//                    measurable.measure(constraints)
-//                }
-//                XLog.d("VerticalComicList: placeables size ${placeables[0].measuredHeight}")
-//                layout(placeables[0].measuredWidth, (placeables[0].measuredHeight * scale).roundToInt()) {
-//                    XLog.d("VerticalComicList: layout ${placeables[0].measuredWidth} ${placeables[0].measuredHeight}")
-//                    XLog.d("VerticalComicList: actual size ${this.coordinates?.size}")
-//                    val offsetY = (placeables[0].measuredHeight * scale).roundToInt() - placeables[0].measuredHeight
-//                    placeables.forEachIndexed { _, placeable ->
-//                        placeable.placeRelative(0, offsetY / 2)
-//                    }
-//                }
-//            }
-//        }
-//    }
-
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)

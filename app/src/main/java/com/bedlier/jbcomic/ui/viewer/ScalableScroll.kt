@@ -15,6 +15,7 @@ import androidx.compose.foundation.gestures.panBy
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.rotateBy
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.gestures.zoomBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,6 +24,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -262,11 +264,15 @@ fun ScalableLayout(
         val placeables = measurables.map { measurable ->
             measurable.measure(constraints)
         }
-        val layoutWidth = placeables.maxOfOrNull { it.width } ?: 0
-        val layoutHeight = placeables.maxOfOrNull { it.height } ?: 0
+        val maxWidth = placeables.maxOfOrNull { it.width } ?: 0
+        val maxHeight = placeables.maxOfOrNull { it.height } ?: 0
+        val layoutWidth =
+            if (orientation == Orientation.Horizontal) (maxWidth * scale).roundToInt() else maxWidth
+        val layoutHeight =
+            if (orientation == Orientation.Vertical) (maxHeight * scale).roundToInt() else maxHeight
         layout(
             layoutWidth,
-            (layoutHeight * scale).roundToInt()
+            layoutHeight
         ) {
             if (orientation == Orientation.Vertical) {
                 val offsetY =
@@ -333,6 +339,7 @@ private class ScalableScrollScopeImpl(
 
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ScalableLazyColumn(
     modifier: Modifier = Modifier,
@@ -376,3 +383,49 @@ fun ScalableLazyColumn(
         }
     }
 }
+
+@Composable
+fun ScalableLazyRow(
+    modifier: Modifier = Modifier,
+    lazyListState: LazyListState = rememberLazyListState(),
+    transformableState: TransformableState? = null,
+    scaleRange: Range<Float> = Range(1f, 5f),
+    content: ScalableScrollScope.() -> Unit
+) {
+    val scale: MutableFloatState = remember { mutableFloatStateOf(1f) }
+    val offset: MutableState<Offset> = remember { mutableStateOf(Offset.Zero) }
+    var size by remember { mutableStateOf(IntSize.Zero) }
+    val mTransformableState =
+        transformableState ?: rememberTransformableState { zoomChange, panChange, _ ->
+            scale.floatValue *= zoomChange
+            if (scale.floatValue < scaleRange.lower) {
+                scale.floatValue = scaleRange.lower
+            } else if (scale.floatValue > scaleRange.upper) {
+                scale.floatValue = scaleRange.upper
+            }
+            offset.value += panChange
+            if (offset.value.y > size.height * (scale.floatValue - 1f) / 2f) {
+                offset.value = Offset(offset.value.x, size.height * (scale.floatValue - 1f) / 2f)
+            } else if (offset.value.y < -size.height * (scale.floatValue - 1f) / 2f) {
+                offset.value = Offset(offset.value.x, -size.height * (scale.floatValue - 1f) / 2f)
+            }
+            XLog.d("ScalableLazyRow: offset ${offset.value}")
+        }
+    LazyRow(
+        userScrollEnabled = false,
+        state = lazyListState,
+        contentPadding = PaddingValues(all = 16.dp),
+        modifier = modifier
+            .scalableScroll(lazyListState, Orientation.Horizontal, mTransformableState)
+            .onSizeChanged { newSize: IntSize ->
+                size = newSize
+            },
+    ) {
+        val scalableScrollScope =
+            ScalableScrollScopeImpl(this, scale, offset, Orientation.Horizontal)
+        with(scalableScrollScope) {
+            content()
+        }
+    }
+}
+
