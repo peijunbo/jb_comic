@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.Icon
@@ -50,11 +51,12 @@ fun ConfigToggleItem(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
         FilledIconToggleButton(
             checked = checked,
             onCheckedChange = onCheckedChange,
             modifier = Modifier.size(IconButtonStyle.ExtraLarge),
-            shape = Shapes.extraLarge,
+            shape = Shapes.extraLarge.copy(CornerSize(20.dp)),
         ) {
             Icon(imageVector = icon, contentDescription = contentDescription, modifier = Modifier.size(
                 IconButtonStyle.IconSize.ExtraLarge

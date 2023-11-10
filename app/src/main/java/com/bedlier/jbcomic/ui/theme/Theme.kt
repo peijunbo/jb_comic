@@ -40,6 +40,8 @@ private val LightColorScheme = lightColorScheme(
     onSurface = Color(0xFF1C1B1F),
     */
 )
+val Shapes = Shapes(
+)
 
 @Composable
 fun JBComicTheme(
@@ -70,6 +72,7 @@ fun JBComicTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = Shapes,
         content = content
     )
 }
@@ -83,9 +86,7 @@ object ElevationTokens {
     val Level5 = 12.0.dp
 }
 
-val Shapes = Shapes(
-    extraLarge = RoundedCornerShape(20.dp)
-)
+
 
 object IconButtonStyle {
     val Small = 24.dp

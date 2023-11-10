@@ -171,9 +171,6 @@ private fun Modifier.scalableScroll(
                                             rotationChange = if (rotationEnabled) rotation else 0f
                                         )
                                     )
-                                    positionChanges.forEach {
-                                        it.consume()
-                                    }
                                 } else if (positionChanges.size == 1) {
                                     val pan = event.calculatePan()
                                     channel.trySend(ScaleScrollEvent.ScaleDelta(1f, pan, 0f))
@@ -181,6 +178,9 @@ private fun Modifier.scalableScroll(
                                     if (pan != Offset.Zero) {
                                         channel.trySend(ScaleScrollEvent.ScrollDelta(pan))
                                     }
+                                }
+                                positionChanges.forEach {
+                                    it.consume()
                                 }
                             }
                         } while (!canceled && event.changes.any { it.pressed })
@@ -339,7 +339,7 @@ private class ScalableScrollScopeImpl(
 
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+
 @Composable
 fun ScalableLazyColumn(
     modifier: Modifier = Modifier,
@@ -370,7 +370,6 @@ fun ScalableLazyColumn(
     LazyColumn(
         userScrollEnabled = false,
         state = lazyListState,
-        contentPadding = PaddingValues(all = 16.dp),
         modifier = modifier
             .scalableScroll(lazyListState, Orientation.Vertical, mTransformableState)
             .onSizeChanged { newSize: IntSize ->
@@ -414,7 +413,6 @@ fun ScalableLazyRow(
     LazyRow(
         userScrollEnabled = false,
         state = lazyListState,
-        contentPadding = PaddingValues(all = 16.dp),
         modifier = modifier
             .scalableScroll(lazyListState, Orientation.Horizontal, mTransformableState)
             .onSizeChanged { newSize: IntSize ->
