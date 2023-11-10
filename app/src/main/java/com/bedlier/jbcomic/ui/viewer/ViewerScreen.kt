@@ -90,6 +90,7 @@ fun ViewerScreen(
                     onClick = {
                         showMenu = !showMenu
                     },
+                    onLongClick = {}
                 )
         ) {
             ViewerPager(imageViewModel = imageViewModel, singleMode = singleMode.value)

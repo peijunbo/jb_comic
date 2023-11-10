@@ -11,10 +11,12 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateRotation
 import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.panBy
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.rotateBy
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.gestures.zoomBy
 import androidx.compose.foundation.layout.Box
@@ -81,10 +83,10 @@ private fun Modifier.scalableScroll(
             while (isActive) {
                 val event = channel.receive()
                 try {
-                    if (flingJob != null && flingJob.isActive) {
-                        flingJob.cancel()
-                    }
                     when (event) {
+                        is ScaleScrollEvent.ScaleScrollStarted -> {
+                            flingJob?.cancel()
+                        }
                         is ScaleScrollEvent.ScaleDelta -> {
                             if (event.zoomChange != 1f) {
                                 transformableState.zoomBy(event.zoomChange)
@@ -99,20 +101,38 @@ private fun Modifier.scalableScroll(
 
                         is ScaleScrollEvent.ScrollDelta -> {
                             if (orientation == Orientation.Vertical) {
-                                val rest = state.scrollBy(-event.delta.y)
-                                overscrollEffect.applyToScroll(
-                                    Offset(0f, event.delta.y),
-                                    NestedScrollSource.Drag,
-                                ) {
-                                    Offset(0f, -rest)
+                                state.scroll {
+                                    val delta = Offset(0f, event.delta.y)
+                                    val performScroll: (Offset) -> Offset = {
+                                        // double reverse to make the sign is the same with origin Offset
+                                        Offset(0f, -scrollBy(-it.y))
+                                    }
+                                    if (state.canScrollForward || state.canScrollBackward) {
+                                        overscrollEffect.applyToScroll(
+                                            delta,
+                                            NestedScrollSource.Drag,
+                                            performScroll = performScroll
+                                        )
+                                    } else {
+                                        performScroll(delta)
+                                    }
                                 }
                             } else {
-                                val rest = state.scrollBy(-event.delta.x)
-                                overscrollEffect.applyToScroll(
-                                    Offset(event.delta.x, 0f),
-                                    NestedScrollSource.Drag,
-                                ) {
-                                    Offset(-rest, 0f)
+                                state.scroll {
+                                    val delta = Offset(event.delta.x, 0f)
+                                    val performScroll: (Offset) -> Offset = {
+                                        // double reverse to make the sign is the same with origin Offset
+                                        Offset(-scrollBy(-it.x), 0f)
+                                    }
+                                    if (state.canScrollForward || state.canScrollBackward) {
+                                        overscrollEffect.applyToScroll(
+                                            delta,
+                                            NestedScrollSource.Drag,
+                                            performScroll = performScroll
+                                        )
+                                    } else {
+                                        performScroll(delta)
+                                    }
                                 }
                             }
                         }
@@ -121,19 +141,27 @@ private fun Modifier.scalableScroll(
                             state.scroll {
                                 with(flingBehavior) {
                                     flingJob = coroutineScope.launch {
-                                        overscrollEffect.applyToFling(
+                                        val originVelocity =
                                             if (orientation == Orientation.Vertical) event.velocity.copy(
-                                                x = 0f
+                                                x = 0f,
+                                                y = event.velocity.y
                                             )
-                                            else event.velocity.copy(y = 0f),
+                                            else event.velocity.copy(y = 0f, x = event.velocity.x)
+                                        overscrollEffect.applyToFling(
+                                            originVelocity,
                                             performFling = {
                                                 if (orientation == Orientation.Vertical) {
-                                                    Velocity(0f, performFling(-it.y)) - it
+                                                    // double reverse to make the sign is the same with origin Velocity
+                                                    val rest = -performFling(-it.y)
+                                                    it - Velocity(0f, rest)
                                                 } else {
-                                                    Velocity(performFling(-it.x), 0f) - it
+                                                    // double reverse to make the sign is the same with origin Velocity
+                                                    val rest = -performFling(-it.x)
+                                                    it - Velocity(rest, 0f)
                                                 }
                                             }
                                         )
+
                                     }
                                 }
                             }
@@ -154,7 +182,8 @@ private fun Modifier.scalableScroll(
             coroutineScope {
                 awaitEachGesture {
                     try {
-                        awaitFirstDown(requireUnconsumed = false)
+                        awaitFirstDown(requireUnconsumed = true)
+                        channel.trySend(ScaleScrollEvent.ScaleScrollStarted)
                         do {
                             val event = awaitPointerEvent()
                             val canceled = event.changes.any { it.isConsumed }
@@ -365,7 +394,6 @@ fun ScalableLazyColumn(
             } else if (offset.value.x < -size.width * (scale.floatValue - 1f) / 2f) {
                 offset.value = Offset(-size.width * (scale.floatValue - 1f) / 2f, offset.value.y)
             }
-            XLog.d("ScalableLazyColumn: offset ${offset.value}")
         }
     LazyColumn(
         userScrollEnabled = false,
@@ -408,7 +436,6 @@ fun ScalableLazyRow(
             } else if (offset.value.y < -size.height * (scale.floatValue - 1f) / 2f) {
                 offset.value = Offset(offset.value.x, -size.height * (scale.floatValue - 1f) / 2f)
             }
-            XLog.d("ScalableLazyRow: offset ${offset.value}")
         }
     LazyRow(
         userScrollEnabled = false,
