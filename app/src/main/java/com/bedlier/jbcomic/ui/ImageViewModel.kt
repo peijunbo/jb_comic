@@ -44,7 +44,7 @@ class ImageViewModel : ViewModel() {
     var viewIndex: Int
         get() = _viewIndex.intValue
         set(value) {
-            if (value in 0.._viewQueue.lastIndex)
+            if (value in viewQueue.indices)
             _viewIndex.intValue = value
         }
 
