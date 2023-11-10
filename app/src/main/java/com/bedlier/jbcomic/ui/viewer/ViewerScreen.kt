@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
@@ -21,25 +20,21 @@ import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.outlined.LooksOne
 import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalMinimumInteractiveComponentEnforcement
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -48,18 +43,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bedlier.jbcomic.R
 import com.bedlier.jbcomic.ui.ImageViewModel
 import com.bedlier.jbcomic.ui.navigation.LocalNavController
-import com.bedlier.jbcomic.ui.navigation.Screen
 import com.bedlier.jbcomic.ui.theme.ElevationTokens
 import com.bedlier.jbcomic.ui.theme.IconButtonStyle
 import com.bedlier.jbcomic.ui.viewer.widgets.ConfigToggleItem
@@ -68,10 +57,9 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 
 @OptIn(ExperimentalFoundationApi::class)
-@Preview
 @Composable
 fun ViewerScreen(
-    imageViewModel: ImageViewModel = viewModel()
+    imageViewModel: ImageViewModel
 ) {
     val singleMode = remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
@@ -104,7 +92,7 @@ fun ViewerScreen(
                     },
                 )
         ) {
-            ViewerPager(singleMode = singleMode.value)
+            ViewerPager(imageViewModel = imageViewModel, singleMode = singleMode.value)
         }
         AnimatedVisibility(
             visible = showMenu,
@@ -148,21 +136,24 @@ fun ViewerAppBar(
 
 @Composable
 fun ViewerPager(
+    imageViewModel: ImageViewModel,
     singleMode: Boolean
 ) {
     if (singleMode) {
         Text(text = "Single")
     } else {
-        VerticalComicList()
+        VerticalComicList(imageViewModel = imageViewModel)
     }
 }
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun VerticalComicList(
-    imageViewModel: ImageViewModel = viewModel(LocalNavController.current.getBackStackEntry(Screen.Home.route))
+    imageViewModel: ImageViewModel
 ) {
-    ScalableLazyColumn {
+    ScalableLazyColumn(
+        lazyListState = rememberLazyListState(initialFirstVisibleItemIndex = imageViewModel.viewIndex),
+    ) {
         scalableItems(imageViewModel.viewQueue.size) { index: Int ->
             val image = imageViewModel.viewQueue[index]
             GlideImage(

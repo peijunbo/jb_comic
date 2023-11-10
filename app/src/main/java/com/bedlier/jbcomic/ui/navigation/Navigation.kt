@@ -35,11 +35,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.bedlier.jbcomic.R
+import com.bedlier.jbcomic.ui.ImageViewModel
 import com.bedlier.jbcomic.ui.home.HomeScreen
 import com.bedlier.jbcomic.ui.viewer.ViewerScreen
 import com.elvishew.xlog.XLog
@@ -112,6 +114,7 @@ fun NavContainer() {
             }
         }
     ) {
+        val imageViewModel: ImageViewModel = viewModel()
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
@@ -125,9 +128,12 @@ fun NavContainer() {
             contentAlignment = Alignment.Center
         ) {
             composable(Screen.Home.route) {
-                HomeScreen(onOpenDrawer = {
-                    coroutineScope.launch { drawerState.open() }
-                })
+                HomeScreen(
+                    onOpenDrawer = {
+                        coroutineScope.launch { drawerState.open() }
+                    },
+                    imageViewModel = imageViewModel
+                )
             }
             composable(Screen.Settings.route) {
                 Text(text = "Settings")
@@ -136,7 +142,7 @@ fun NavContainer() {
                 Text(text = "About")
             }
             composable(Screen.Viewer.route) {
-                ViewerScreen()
+                ViewerScreen(imageViewModel = imageViewModel)
             }
         }
     }

@@ -51,7 +51,7 @@ private const val TAG = "HomeScreen"
 @Composable
 fun HomeScreen(
     onOpenDrawer: () -> Unit = {},
-    imageViewModel: ImageViewModel = viewModel()
+    imageViewModel: ImageViewModel
 ) {
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { Page.entries.size })
@@ -119,7 +119,7 @@ fun HomeScreen(
         },
         content = {
             Surface(modifier = Modifier.padding(it)) {
-                HomeContent(pagerState)
+                HomeContent(imageViewModel = imageViewModel, pagerState = pagerState)
             }
         }
     )
@@ -128,6 +128,7 @@ fun HomeScreen(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeContent(
+    imageViewModel: ImageViewModel,
     pagerState: PagerState
 ) {
     HorizontalPager(
@@ -142,7 +143,7 @@ fun HomeContent(
         ) {
             when (page) {
                 Page.Photo.ordinal -> {
-                    PhotoPage()
+                    PhotoPage(imageViewModel = imageViewModel)
                 }
 
                 Page.Queue.ordinal -> {
@@ -150,7 +151,7 @@ fun HomeContent(
                 }
 
                 Page.Album.ordinal -> {
-                    AlbumPage()
+                    AlbumPage(imageViewModel = imageViewModel)
                 }
 
                 Page.Storage.ordinal -> {

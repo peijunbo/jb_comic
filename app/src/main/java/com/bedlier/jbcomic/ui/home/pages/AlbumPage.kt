@@ -30,7 +30,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bedlier.jbcomic.R
 import com.bedlier.jbcomic.data.media.MediaImage
 import com.bedlier.jbcomic.ui.ImageViewModel
@@ -40,16 +39,17 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 
 private const val TAG = "AlbumPage"
+
 @Composable
 fun AlbumPage(
-    imageViewModel: ImageViewModel = viewModel()
+    imageViewModel: ImageViewModel
 ) {
     var permissionGranted by remember { mutableStateOf(imageViewModel.checkPermission()) }
     if (permissionGranted) {
         LaunchedEffect(key1 = Unit) {
             imageViewModel.loadImageStore()
         }
-        AlbumPageContent()
+        AlbumPageContent(imageViewModel = imageViewModel)
     } else {
         val activity = LocalContext.current as Activity
         LaunchedEffect(key1 = Unit) {
@@ -64,15 +64,18 @@ fun AlbumPage(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = stringResource(id = R.string.message_no_permission))
-            val activity = LocalContext.current as Activity
+            val currentActivity = LocalContext.current as Activity
             Button(
                 onClick = {
-                    imageViewModel.requestPermission(activity = activity) { _: MutableList<String>, allGranted: Boolean ->
-                        if (allGranted) {
-                            imageViewModel.loadImageStore()
-                            permissionGranted = true
+                    imageViewModel
+                        .requestPermission(
+                            activity = currentActivity
+                        ) { _: MutableList<String>, allGranted: Boolean ->
+                            if (allGranted) {
+                                imageViewModel.loadImageStore()
+                                permissionGranted = true
+                            }
                         }
-                    }
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.error
@@ -89,7 +92,7 @@ fun AlbumPage(
 
 @Composable
 fun AlbumPageContent(
-    imageViewModel: ImageViewModel = viewModel()
+    imageViewModel: ImageViewModel
 ) {
     if (imageViewModel.albums.isEmpty()) {
         Text(text = "No Image")
@@ -107,9 +110,8 @@ fun AlbumPageContent(
                 key = bucketId
             ) {
                 AlbumItem(images = images) {
-                    imageViewModel.viewQueue.clear()
-                    imageViewModel.viewQueue.addAll(images)
-                    imageViewModel.logRandom()
+                    imageViewModel.clearViewQueue()
+                    imageViewModel.addToViewQueue(images)
                     Log.d(TAG, "AlbumPageContent: imageViewModel ${imageViewModel.hashCode()}")
                     Log.d(TAG, "AlbumPageContent: addAll after ${imageViewModel.viewQueue.size}")
                     navController.navigate(Screen.Viewer.route)

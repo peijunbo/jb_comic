@@ -3,6 +3,7 @@ package com.bedlier.jbcomic.ui
 import android.app.Activity
 import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -25,6 +26,7 @@ class ImageViewModel : ViewModel() {
     companion object {
         private const val TAG = "ImageViewModel"
     }
+
     private val _imageList = mutableStateListOf<MediaImage>()
     private val imageMutex = Mutex()
     val imageList
@@ -34,11 +36,18 @@ class ImageViewModel : ViewModel() {
     val albums
         get() = _imageList.groupSortedBy(albumSortState.value)
     var albumSortState = mutableStateOf(AlbumSortMethod())
-    val viewQueue = mutableStateListOf<MediaImage>()
-    val randomId = Math.random()
-    fun logRandom() {
-        Log.d(TAG, "logRandom: $randomId")
-    }
+
+    private val _viewQueue = mutableStateListOf<MediaImage>()
+    val viewQueue: List<MediaImage>
+        get() = _viewQueue
+    private val _viewIndex = mutableIntStateOf(0)
+    var viewIndex: Int
+        get() = _viewIndex.intValue
+        set(value) {
+            if (value in 0.._viewQueue.lastIndex)
+            _viewIndex.intValue = value
+        }
+
     val imagesGroupByDate
         get() = _imageList.groupBy {
             // group by date
@@ -62,6 +71,26 @@ class ImageViewModel : ViewModel() {
             }
             isImageLoading = false
         }
+    }
+
+    fun addToViewQueue(image: MediaImage) {
+        if (image !in _viewQueue) {
+            _viewQueue.add(image)
+        }
+    }
+
+    fun addToViewQueue(images: List<MediaImage>) {
+        _viewQueue.addAll(images)
+    }
+
+
+    fun addAlbumToViewQueue(bucketId: Long) {
+        val images = _imageList.filter { it.bucketId == bucketId && it !in _viewQueue }
+        _viewQueue.addAll(images)
+    }
+
+    fun clearViewQueue() {
+        _viewQueue.clear()
     }
 
     fun checkPermission() = XXPermissions.isGranted(

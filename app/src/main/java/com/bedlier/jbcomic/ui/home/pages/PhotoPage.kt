@@ -1,6 +1,8 @@
 package com.bedlier.jbcomic.ui.home.pages
 
 import android.app.Activity
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
@@ -26,22 +28,23 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bedlier.jbcomic.R
 import com.bedlier.jbcomic.ui.ImageViewModel
+import com.bedlier.jbcomic.ui.navigation.LocalNavController
+import com.bedlier.jbcomic.ui.navigation.Screen
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 
 @Composable
 fun PhotoPage(
-    imageViewModel: ImageViewModel = viewModel()
+    imageViewModel: ImageViewModel
 ) {
     var permissionGranted by remember { mutableStateOf(imageViewModel.checkPermission()) }
     if (permissionGranted) {
         LaunchedEffect(key1 = Unit) {
             imageViewModel.loadImageStore()
         }
-        PhotoPageContent()
+        PhotoPageContent(imageViewModel = imageViewModel)
     } else {
         val activity = LocalContext.current as Activity
         LaunchedEffect(key1 = Unit) {
@@ -56,11 +59,11 @@ fun PhotoPage(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = stringResource(id = R.string.message_no_permission))
-            val activity = LocalContext.current as Activity
+            val currentActivity = LocalContext.current as Activity
             Button(
                 onClick = {
                     imageViewModel.requestPermission(
-                        activity = activity
+                        activity = currentActivity
                     ) { _: MutableList<String>, allGranted: Boolean ->
                         if (allGranted) {
                             imageViewModel.loadImageStore()
@@ -81,15 +84,16 @@ fun PhotoPage(
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
+@OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun PhotoPageContent(
-    imageViewModel: ImageViewModel = viewModel()
+    imageViewModel: ImageViewModel
 ) {
     if (imageViewModel.imageList.isEmpty()) {
         Text(text = "No Image")
         return
     }
+    val navController = LocalNavController.current
     LazyVerticalGrid(
         columns = GridCells.Adaptive(80.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -99,6 +103,7 @@ fun PhotoPageContent(
         imageViewModel.imagesGroupByDate.entries.forEach { (date, images) ->
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Text(text = date)
+
             }
             items(images, key = { it.id }) { image ->
                 GlideImage(
@@ -108,6 +113,12 @@ fun PhotoPageContent(
                     modifier = Modifier
                         .width(128.dp) // required for aspect ratio
                         .aspectRatio(1f)
+                        .clickable {
+                            imageViewModel.clearViewQueue()
+                            imageViewModel.addToViewQueue(images = imageViewModel.imageList)
+                            imageViewModel.viewIndex = imageViewModel.imageList.indexOf(image)
+                            navController.navigate(Screen.Viewer.route)
+                        }
                 )
             }
         }
