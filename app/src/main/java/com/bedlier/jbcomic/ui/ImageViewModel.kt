@@ -44,8 +44,9 @@ class ImageViewModel : ViewModel() {
     var viewIndex: Int
         get() = _viewIndex.intValue
         set(value) {
-            if (value in viewQueue.indices)
-            _viewIndex.intValue = value
+            if (value in viewQueue.indices) {
+                _viewIndex.intValue = value
+            }
         }
 
     val imagesGroupByDate
