@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
@@ -35,19 +36,26 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bedlier.jbcomic.R
 import com.bedlier.jbcomic.ui.ImageViewModel
 import com.bedlier.jbcomic.ui.navigation.LocalNavController
@@ -58,6 +66,14 @@ import com.bedlier.jbcomic.ui.viewer.widgets.ScalableLazyColumn
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
+import com.elvishew.xlog.XLog
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -67,6 +83,10 @@ fun ViewerScreen(
     val singleMode = remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
+    val viewIndex = remember { mutableIntStateOf(imageViewModel.viewIndex) }
+    val scrollFlow = remember { MutableStateFlow(viewIndex.intValue) }
+
+    val coroutineScope = rememberCoroutineScope()
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -96,7 +116,14 @@ fun ViewerScreen(
                     onLongClick = {}
                 )
         ) {
-            ViewerPager(imageViewModel = imageViewModel, singleMode = singleMode.value)
+            ViewerPager(
+                imageViewModel = imageViewModel,
+                singleMode = singleMode.value,
+                scrollFlow = scrollFlow,
+                onIndexChange = {
+                    viewIndex.intValue = it
+                }
+            )
         }
         AnimatedVisibility(
             visible = showMenu,
@@ -109,7 +136,15 @@ fun ViewerScreen(
         ) {
             ViewerBottomSheet(
                 singleMode = singleMode,
-                onModeClick = { singleMode.value = it }
+                viewIndex = viewIndex,
+                maxIndex = imageViewModel.viewQueue.lastIndex,
+                onModeClick = { singleMode.value = it },
+                onIndexChange = {
+                    coroutineScope.launch {
+                        scrollFlow.emit(it)
+                        XLog.d("ViewerScreen: emit $it")
+                    }
+                }
             )
         }
     }
@@ -141,12 +176,18 @@ fun ViewerAppBar(
 @Composable
 fun ViewerPager(
     imageViewModel: ImageViewModel,
-    singleMode: Boolean
+    singleMode: Boolean,
+    scrollFlow: StateFlow<Int>,
+    onIndexChange: (index: Int) -> Unit
 ) {
     if (singleMode) {
         HorizontalComicPager(imageViewModel = imageViewModel)
     } else {
-        VerticalComicList(imageViewModel = imageViewModel)
+        VerticalComicList(
+            imageViewModel = imageViewModel,
+            scrollFlow = scrollFlow,
+            onIndexChange = onIndexChange
+        )
     }
 }
 
@@ -160,7 +201,7 @@ fun HorizontalComicPager(
     ) {
         imageViewModel.viewQueue.size
     }
-    HorizontalPager(state = state) {index ->
+    HorizontalPager(state = state) { index ->
         val image = imageViewModel.viewQueue[index]
         GlideImage(
             model = image.uri,
@@ -175,10 +216,27 @@ fun HorizontalComicPager(
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun VerticalComicList(
-    imageViewModel: ImageViewModel
+    imageViewModel: ImageViewModel,
+    scrollFlow: StateFlow<Int>,
+    onIndexChange: (index: Int) -> Unit
 ) {
+    val lazyListState =
+        rememberLazyListState(initialFirstVisibleItemIndex = imageViewModel.viewIndex)
+    LaunchedEffect(Unit) {
+        snapshotFlow { lazyListState.firstVisibleItemIndex }
+            .collect { index ->
+                onIndexChange(index)
+            }
+    }
+    LaunchedEffect(key1 = scrollFlow) {
+        scrollFlow.collectLatest {
+            XLog.d("VerticalComicList: collect and scroll to $it")
+            if (it == lazyListState.firstVisibleItemIndex) return@collectLatest
+            lazyListState.scrollToItem(it)
+        }
+    }
     ScalableLazyColumn(
-        lazyListState = rememberLazyListState(initialFirstVisibleItemIndex = imageViewModel.viewIndex),
+        lazyListState = lazyListState
     ) {
         scalableItems(imageViewModel.viewQueue.size) { index: Int ->
             val image = imageViewModel.viewQueue[index]
@@ -198,8 +256,12 @@ fun VerticalComicList(
 @Composable
 fun ViewerBottomSheet(
     singleMode: State<Boolean>,
+    viewIndex: State<Int>,
+    maxIndex: Int,
     onModeClick: (singleMode: Boolean) -> Unit = {},
+    onIndexChange: (index: Int) -> Unit = {}
 ) {
+    val index by viewIndex
     Surface(
         modifier = Modifier
             .zIndex(2f),
@@ -214,6 +276,11 @@ fun ViewerBottomSheet(
                 .fillMaxWidth()
         ) {
             BottomSheetDefaults.DragHandle(modifier = Modifier.align(Alignment.CenterHorizontally))
+            Slider(
+                value = index.coerceAtLeast(0).toFloat(),
+                onValueChange = { onIndexChange(it.toInt()) },
+                valueRange = 0f..maxIndex.coerceAtLeast(0).toFloat(),
+            )
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(IconButtonStyle.ExtraLarge),
                 userScrollEnabled = false,
