@@ -1,4 +1,4 @@
-package com.bedlier.jbcomic.ui.viewer
+package com.bedlier.jbcomic.ui.viewer.widgets
 
 import android.util.Range
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -11,17 +11,12 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateRotation
 import androidx.compose.foundation.gestures.calculateZoom
-import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.panBy
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.rotateBy
-import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.gestures.stopScroll
 import androidx.compose.foundation.gestures.zoomBy
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
@@ -55,8 +50,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.Velocity
-import androidx.compose.ui.unit.dp
-import com.elvishew.xlog.XLog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel

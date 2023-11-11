@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -52,6 +54,7 @@ import com.bedlier.jbcomic.ui.navigation.LocalNavController
 import com.bedlier.jbcomic.ui.theme.ElevationTokens
 import com.bedlier.jbcomic.ui.theme.IconButtonStyle
 import com.bedlier.jbcomic.ui.viewer.widgets.ConfigToggleItem
+import com.bedlier.jbcomic.ui.viewer.widgets.ScalableLazyColumn
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
@@ -141,9 +144,31 @@ fun ViewerPager(
     singleMode: Boolean
 ) {
     if (singleMode) {
-        Text(text = "Single")
+        HorizontalComicPager(imageViewModel = imageViewModel)
     } else {
         VerticalComicList(imageViewModel = imageViewModel)
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class, ExperimentalGlideComposeApi::class)
+@Composable
+fun HorizontalComicPager(
+    imageViewModel: ImageViewModel
+) {
+    val state = rememberPagerState(
+        initialPage = imageViewModel.viewIndex
+    ) {
+        imageViewModel.viewQueue.size
+    }
+    HorizontalPager(state = state) {index ->
+        val image = imageViewModel.viewQueue[index]
+        GlideImage(
+            model = image.uri,
+            contentDescription = image.name,
+            loading = placeholder(R.drawable.ic_launcher_foreground),
+            modifier = Modifier
+                .fillMaxSize()
+        )
     }
 }
 
