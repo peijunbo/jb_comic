@@ -18,6 +18,7 @@ import androidx.compose.foundation.gestures.rotateBy
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.gestures.stopScroll
 import androidx.compose.foundation.gestures.zoomBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -86,6 +87,7 @@ private fun Modifier.scalableScroll(
                     when (event) {
                         is ScaleScrollEvent.ScaleScrollStarted -> {
                             flingJob?.cancel()
+                            state.stopScroll()
                         }
                         is ScaleScrollEvent.ScaleDelta -> {
                             if (event.zoomChange != 1f) {
