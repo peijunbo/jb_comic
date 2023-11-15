@@ -208,7 +208,7 @@ fun HorizontalComicPager(
             contentDescription = image.name,
             loading = placeholder(R.drawable.ic_launcher_foreground),
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
         )
     }
 }

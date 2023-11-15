@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.pointer.PointerInputScope
@@ -273,12 +274,13 @@ fun ScalableLayout(
             Box(
                 modifier = Modifier
                     .wrapContentSize()
-                    .graphicsLayer(
-                        scaleX = scale,
-                        scaleY = scale,
-                        translationX = if (orientation == Orientation.Vertical) offset.x else 0f,
-                        translationY = if (orientation == Orientation.Horizontal) offset.y else 0f
-                    )
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        translationX = offset.x
+                        translationY = offset.y
+                        transformOrigin = TransformOrigin(0.5f, 0f)
+                    }
             ) {
                 content()
             }
@@ -302,7 +304,7 @@ fun ScalableLayout(
                 val offsetY =
                     (layoutHeight * scale).roundToInt() - layoutHeight
                 placeables.forEachIndexed { _, placeable ->
-                    placeable.placeRelative(0, offsetY / 2)
+                    placeable.placeRelative(0, 0)
                 }
             } else {
                 val offsetX =
