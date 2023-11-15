@@ -72,11 +72,14 @@ dependencies {
     implementation("androidx.paging:paging-runtime-ktx:$pagingVersion")
     implementation("androidx.paging:paging-compose:3.3.0-alpha02")
     // navigation
-    implementation("androidx.navigation:navigation-compose:2.7.4")
+    implementation("androidx.navigation:navigation-compose:2.7.5")
     // glide
     implementation("com.github.bumptech.glide:glide:4.15.1")
     implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
     ksp("com.github.bumptech.glide:ksp:4.14.2")
+    // coil
+    implementation("io.coil-kt:coil:2.5.0")
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
