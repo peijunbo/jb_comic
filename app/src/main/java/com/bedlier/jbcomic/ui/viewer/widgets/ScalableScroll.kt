@@ -83,6 +83,7 @@ private fun Modifier.scalableScroll(
                             flingJob?.cancel()
                             state.stopScroll()
                         }
+
                         is ScaleScrollEvent.ScaleDelta -> {
                             if (event.zoomChange != 1f) {
                                 transformableState.zoomBy(event.zoomChange)
@@ -279,7 +280,10 @@ fun ScalableLayout(
                         scaleY = scale
                         translationX = offset.x
                         translationY = offset.y
-                        transformOrigin = TransformOrigin(0.5f, 0f)
+                        transformOrigin =
+                            if (orientation == Orientation.Vertical)
+                                TransformOrigin(0.5f, 0f)
+                            else TransformOrigin(0f, 0.5f)
                     }
             ) {
                 content()
@@ -300,18 +304,8 @@ fun ScalableLayout(
             layoutWidth,
             layoutHeight
         ) {
-            if (orientation == Orientation.Vertical) {
-                val offsetY =
-                    (layoutHeight * scale).roundToInt() - layoutHeight
-                placeables.forEachIndexed { _, placeable ->
-                    placeable.placeRelative(0, 0)
-                }
-            } else {
-                val offsetX =
-                    (layoutWidth * scale).roundToInt() - layoutWidth
-                placeables.forEachIndexed { _, placeable ->
-                    placeable.placeRelative(offsetX / 2, 0)
-                }
+            placeables.forEachIndexed { _, placeable ->
+                placeable.placeRelative(0, 0)
             }
         }
     }
@@ -326,7 +320,7 @@ private class ScalableScrollScopeImpl(
     override fun scalableItem(
         key: Any?,
         contentType: Any?,
-        content: @Composable() (LazyItemScope.() -> Unit)
+        content: @Composable LazyItemScope.() -> Unit
     ) {
         item(
             key = key,
