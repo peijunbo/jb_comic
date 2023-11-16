@@ -278,12 +278,13 @@ fun ScalableLayout(
                     .graphicsLayer {
                         scaleX = scale
                         scaleY = scale
-                        translationX = offset.x
-                        translationY = offset.y
-                        transformOrigin =
-                            if (orientation == Orientation.Vertical)
-                                TransformOrigin(0.5f, 0f)
-                            else TransformOrigin(0f, 0.5f)
+                        if (orientation == Orientation.Vertical) {
+                            translationX = offset.x
+                            transformOrigin = TransformOrigin(0.5f, 0f)
+                        } else {
+                            translationY = offset.y
+                            transformOrigin = TransformOrigin(0f, 0.5f)
+                        }
                     }
             ) {
                 content()
@@ -432,7 +433,7 @@ fun ScalableLazyRow(
         userScrollEnabled = false,
         state = lazyListState,
         modifier = modifier
-            .scalableScroll(lazyListState, Orientation.Horizontal, mTransformableState)
+            .scalableScroll(lazyListState, Orientation.Horizontal,  mTransformableState)
             .onSizeChanged { newSize: IntSize ->
                 size = newSize
             },
