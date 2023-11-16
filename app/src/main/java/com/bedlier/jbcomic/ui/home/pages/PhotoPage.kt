@@ -1,7 +1,6 @@
 package com.bedlier.jbcomic.ui.home.pages
 
 import android.app.Activity
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,12 +27,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.bedlier.jbcomic.R
 import com.bedlier.jbcomic.ui.ImageViewModel
 import com.bedlier.jbcomic.ui.navigation.LocalNavController
 import com.bedlier.jbcomic.ui.navigation.Screen
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
 
 @Composable
 fun PhotoPage(
@@ -84,7 +82,6 @@ fun PhotoPage(
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun PhotoPageContent(
     imageViewModel: ImageViewModel
@@ -106,7 +103,7 @@ fun PhotoPageContent(
 
             }
             items(images, key = { it.id }) { image ->
-                GlideImage(
+                AsyncImage(
                     model = image.uri,
                     contentDescription = image.name,
                     contentScale = ContentScale.Crop,

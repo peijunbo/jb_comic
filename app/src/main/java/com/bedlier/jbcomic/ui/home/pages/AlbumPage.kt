@@ -30,13 +30,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.bedlier.jbcomic.R
 import com.bedlier.jbcomic.data.media.MediaImage
 import com.bedlier.jbcomic.ui.ImageViewModel
 import com.bedlier.jbcomic.ui.navigation.LocalNavController
 import com.bedlier.jbcomic.ui.navigation.Screen
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
 
 private const val TAG = "AlbumPage"
 
@@ -122,7 +121,7 @@ fun AlbumPageContent(
 }
 
 
-@OptIn(ExperimentalGlideComposeApi::class)
+
 @Composable
 fun AlbumItem(
     images: List<MediaImage>,
@@ -132,7 +131,7 @@ fun AlbumItem(
         onClick(images[0].bucketId)
         Log.d(TAG, "AlbumItem: onClick")
     }) {
-        GlideImage(
+        AsyncImage(
             model = images[0].uri,
             contentDescription = images[0].name,
             contentScale = ContentScale.Crop,

@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
@@ -32,17 +31,16 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.outlined.LooksOne
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -55,7 +53,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.SubcomposeAsyncImage
 import com.bedlier.jbcomic.R
 import com.bedlier.jbcomic.ui.ImageViewModel
 import com.bedlier.jbcomic.ui.navigation.LocalNavController
@@ -63,17 +61,11 @@ import com.bedlier.jbcomic.ui.theme.ElevationTokens
 import com.bedlier.jbcomic.ui.theme.IconButtonStyle
 import com.bedlier.jbcomic.ui.viewer.widgets.ConfigToggleItem
 import com.bedlier.jbcomic.ui.viewer.widgets.ScalableLazyColumn
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.placeholder
 import com.elvishew.xlog.XLog
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -191,7 +183,7 @@ fun ViewerPager(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalGlideComposeApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HorizontalComicPager(
     imageViewModel: ImageViewModel
@@ -201,19 +193,20 @@ fun HorizontalComicPager(
     ) {
         imageViewModel.viewQueue.size
     }
-    HorizontalPager(state = state) { index ->
-        val image = imageViewModel.viewQueue[index]
-        GlideImage(
+    val images = imageViewModel.viewQueue
+    HorizontalPager(state = state, key = {images[it].id}) { index ->
+        val image = images[index]
+        SubcomposeAsyncImage(
             model = image.uri,
             contentDescription = image.name,
-            loading = placeholder(R.drawable.ic_launcher_foreground),
-            modifier = Modifier
-                .fillMaxWidth()
+            loading = {
+                CircularProgressIndicator()
+            },
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun VerticalComicList(
     imageViewModel: ImageViewModel,
@@ -235,17 +228,19 @@ fun VerticalComicList(
             lazyListState.scrollToItem(it)
         }
     }
+    val images = imageViewModel.viewQueue
     ScalableLazyColumn(
         lazyListState = lazyListState
     ) {
-        scalableItems(imageViewModel.viewQueue.size) { index: Int ->
-            val image = imageViewModel.viewQueue[index]
-            GlideImage(
+        scalableItems(images.size, key = {images[it].id}) { index: Int ->
+            val image = images[index]
+            SubcomposeAsyncImage(
                 model = image.uri,
                 contentDescription = image.name,
-                loading = placeholder(R.drawable.ic_launcher_foreground),
-                modifier = Modifier
-                    .fillMaxWidth()
+                loading = {
+                    CircularProgressIndicator()
+                },
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
