@@ -1,6 +1,8 @@
 package com.bedlier.jbcomic.ui.viewer
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -39,8 +41,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.IntState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -76,12 +80,10 @@ fun ViewerScreen(
     var showMenu by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
     val viewIndex = remember { mutableIntStateOf(imageViewModel.viewIndex) }
-    val scrollFlow = remember { MutableStateFlow(viewIndex.intValue) }
-
+    val scrollFlow = remember { MutableStateFlow(imageViewModel.viewIndex) }
     val coroutineScope = rememberCoroutineScope()
     Box(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         AnimatedVisibility(
             modifier = Modifier
@@ -105,17 +107,15 @@ fun ViewerScreen(
                     onClick = {
                         showMenu = !showMenu
                     },
-                    onLongClick = {}
-                )
+                    onLongClick = {})
         ) {
-            ViewerPager(
-                imageViewModel = imageViewModel,
+            ViewerPager(imageViewModel = imageViewModel,
                 singleMode = singleMode.value,
                 scrollFlow = scrollFlow,
                 onIndexChange = {
+                    if (it == viewIndex.intValue) return@ViewerPager
                     viewIndex.intValue = it
-                }
-            )
+                })
         }
         AnimatedVisibility(
             visible = showMenu,
@@ -126,18 +126,17 @@ fun ViewerScreen(
             enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
             exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 })
         ) {
-            ViewerBottomSheet(
-                singleMode = singleMode,
+            ViewerBottomSheet(singleMode = singleMode,
                 viewIndex = viewIndex,
                 maxIndex = imageViewModel.viewQueue.lastIndex,
                 onModeClick = { singleMode.value = it },
                 onIndexChange = {
+                    if (scrollFlow.value == it) return@ViewerBottomSheet
                     coroutineScope.launch {
+                        XLog.d("onIndexChange: $it")
                         scrollFlow.emit(it)
-                        XLog.d("ViewerScreen: emit $it")
                     }
-                }
-            )
+                })
         }
     }
 
@@ -149,20 +148,16 @@ fun ViewerAppBar(
     modifier: Modifier = Modifier
 ) {
     val navController = LocalNavController.current
-    CenterAlignedTopAppBar(
-        modifier = modifier,
-        navigationIcon = {
-            IconButton(onClick = {
-                navController.popBackStack()
-            }) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = stringResource(id = R.string.button_back)
-                )
-            }
-        },
-        title = { /*TODO*/ }
-    )
+    CenterAlignedTopAppBar(modifier = modifier, navigationIcon = {
+        IconButton(onClick = {
+            navController.popBackStack()
+        }) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = stringResource(id = R.string.button_back)
+            )
+        }
+    }, title = { /*TODO*/ })
 }
 
 @Composable
@@ -173,12 +168,12 @@ fun ViewerPager(
     onIndexChange: (index: Int) -> Unit
 ) {
     if (singleMode) {
-        HorizontalComicPager(imageViewModel = imageViewModel)
+        HorizontalComicPager(
+            imageViewModel = imageViewModel, scrollFlow = scrollFlow, onIndexChange = onIndexChange
+        )
     } else {
         VerticalComicList(
-            imageViewModel = imageViewModel,
-            scrollFlow = scrollFlow,
-            onIndexChange = onIndexChange
+            imageViewModel = imageViewModel, scrollFlow = scrollFlow, onIndexChange = onIndexChange
         )
     }
 }
@@ -186,61 +181,64 @@ fun ViewerPager(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HorizontalComicPager(
-    imageViewModel: ImageViewModel
+    imageViewModel: ImageViewModel, scrollFlow: StateFlow<Int>, onIndexChange: (index: Int) -> Unit
 ) {
+    val viewIndex = scrollFlow.collectAsState()
     val state = rememberPagerState(
-        initialPage = imageViewModel.viewIndex
+        initialPage = viewIndex.value
     ) {
         imageViewModel.viewQueue.size
     }
+    LaunchedEffect(Unit) {
+        scrollFlow.collectLatest {
+            if (it == state.currentPage) return@collectLatest
+            state.animateScrollToPage(it)
+        }
+    }
+    LaunchedEffect(key1 = state) {
+        snapshotFlow { state.currentPage }.collectLatest {
+            onIndexChange(it)
+        }
+    }
     val images = imageViewModel.viewQueue
-    HorizontalPager(state = state, key = {images[it].id}) { index ->
+    HorizontalPager(state = state, key = { images[it].id }) { index ->
         val image = images[index]
         SubcomposeAsyncImage(
-            model = image.uri,
-            contentDescription = image.name,
-            loading = {
+            model = image.uri, contentDescription = image.name, loading = {
                 CircularProgressIndicator()
-            },
-            modifier = Modifier.fillMaxWidth()
+            }, modifier = Modifier.fillMaxWidth()
         )
     }
 }
 
 @Composable
 fun VerticalComicList(
-    imageViewModel: ImageViewModel,
-    scrollFlow: StateFlow<Int>,
-    onIndexChange: (index: Int) -> Unit
+    imageViewModel: ImageViewModel, scrollFlow: StateFlow<Int>, onIndexChange: (index: Int) -> Unit
 ) {
+    val viewIndex = scrollFlow.collectAsState()
     val lazyListState =
-        rememberLazyListState(initialFirstVisibleItemIndex = imageViewModel.viewIndex)
+        rememberLazyListState(initialFirstVisibleItemIndex = viewIndex.value)
     LaunchedEffect(Unit) {
-        snapshotFlow { lazyListState.firstVisibleItemIndex }
-            .collect { index ->
-                onIndexChange(index)
-            }
+        snapshotFlow { lazyListState.firstVisibleItemIndex }.collect { index ->
+            onIndexChange(index)
+        }
     }
     LaunchedEffect(key1 = scrollFlow) {
         scrollFlow.collectLatest {
-            XLog.d("VerticalComicList: collect and scroll to $it")
             if (it == lazyListState.firstVisibleItemIndex) return@collectLatest
-            lazyListState.scrollToItem(it)
+            lazyListState.animateScrollToItem(it)
         }
     }
     val images = imageViewModel.viewQueue
     ScalableLazyColumn(
         lazyListState = lazyListState
     ) {
-        scalableItems(images.size, key = {images[it].id}) { index: Int ->
+        scalableItems(images.size, key = { images[it].id }) { index: Int ->
             val image = images[index]
             SubcomposeAsyncImage(
-                model = image.uri,
-                contentDescription = image.name,
-                loading = {
+                model = image.uri, contentDescription = image.name, loading = {
                     CircularProgressIndicator()
-                },
-                modifier = Modifier.fillMaxWidth()
+                }, modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -251,29 +249,31 @@ fun VerticalComicList(
 @Composable
 fun ViewerBottomSheet(
     singleMode: State<Boolean>,
-    viewIndex: State<Int>,
+    viewIndex: IntState,
     maxIndex: Int,
     onModeClick: (singleMode: Boolean) -> Unit = {},
     onIndexChange: (index: Int) -> Unit = {}
 ) {
-    val index by viewIndex
+
+
+
     Surface(
-        modifier = Modifier
-            .zIndex(2f),
+        modifier = Modifier.zIndex(2f),
         tonalElevation = ElevationTokens.Level1,
         shape = MaterialTheme.shapes.extraLarge.copy(
-            bottomEnd = CornerSize(0.dp),
-            bottomStart = CornerSize(0.dp)
+            bottomEnd = CornerSize(0.dp), bottomStart = CornerSize(0.dp)
         ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
+            modifier = Modifier.fillMaxWidth()
         ) {
             BottomSheetDefaults.DragHandle(modifier = Modifier.align(Alignment.CenterHorizontally))
+
             Slider(
-                value = index.coerceAtLeast(0).toFloat(),
-                onValueChange = { onIndexChange(it.toInt()) },
+                value = viewIndex.intValue.coerceAtLeast(0).toFloat(),
+                onValueChange = {
+                    onIndexChange(it.toInt())
+                },
                 valueRange = 0f..maxIndex.coerceAtLeast(0).toFloat(),
             )
             LazyVerticalGrid(
