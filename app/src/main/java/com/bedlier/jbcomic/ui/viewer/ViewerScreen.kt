@@ -203,11 +203,13 @@ fun HorizontalComicPager(
     val images = imageViewModel.viewQueue
     HorizontalPager(state = state, key = { images[it].id }) { index ->
         val image = images[index]
-        SubcomposeAsyncImage(
-            model = image.uri, contentDescription = image.name, loading = {
-                CircularProgressIndicator()
-            }, modifier = Modifier.fillMaxWidth()
-        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            SubcomposeAsyncImage(
+                model = image.uri, contentDescription = image.name, loading = {
+                    CircularProgressIndicator()
+                }, modifier = Modifier.align(Alignment.Center).fillMaxWidth()
+            )
+        }
     }
 }
 
