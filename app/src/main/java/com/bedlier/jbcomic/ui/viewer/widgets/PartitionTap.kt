@@ -1,6 +1,11 @@
 package com.bedlier.jbcomic.ui.viewer.widgets
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material.ripple.LocalRippleTheme
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,6 +28,7 @@ fun Modifier.partitionTap(
     var size by remember {
         mutableStateOf(IntSize.Zero)
     }
+
     val block: suspend PointerInputScope.() -> Unit = {
         detectTapGestures(
             onTap = if(onTap != null) {it ->

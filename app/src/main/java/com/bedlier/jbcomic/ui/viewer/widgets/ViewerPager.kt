@@ -1,7 +1,9 @@
 package com.bedlier.jbcomic.ui.viewer.widgets
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +14,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -136,6 +139,12 @@ fun VerticalComicList(
     }
     val images = imageViewModel.viewQueue
     ScalableLazyColumn(
+        modifier = Modifier.fillMaxSize().clickable(
+            remember { MutableInteractionSource()},
+            indication = null
+        ) {
+            onOpenMenu()
+        },
         lazyListState = lazyListState
     ) {
         scalableItems(images.size, key = { images[it].id }) { index: Int ->

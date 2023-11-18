@@ -89,13 +89,6 @@ fun ViewerScreen(
                 .fillMaxSize()
                 .zIndex(1f)
                 .windowInsetsPadding(WindowInsets.safeContent)
-                .combinedClickable(
-                    interactionSource = interactionSource,
-                    indication = null,
-                    onClick = {
-                        showMenu = !showMenu
-                    },
-                    onLongClick = {})
         ) {
             ViewerPager(
                 imageViewModel = imageViewModel,
