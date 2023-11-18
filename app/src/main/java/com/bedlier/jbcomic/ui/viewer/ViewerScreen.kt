@@ -1,8 +1,6 @@
 package com.bedlier.jbcomic.ui.viewer
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -24,16 +22,12 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.outlined.LooksOne
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,33 +36,27 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.IntState
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import coil.compose.SubcomposeAsyncImage
 import com.bedlier.jbcomic.R
 import com.bedlier.jbcomic.ui.ImageViewModel
 import com.bedlier.jbcomic.ui.navigation.LocalNavController
 import com.bedlier.jbcomic.ui.theme.ElevationTokens
 import com.bedlier.jbcomic.ui.theme.IconButtonStyle
 import com.bedlier.jbcomic.ui.viewer.widgets.ConfigToggleItem
-import com.bedlier.jbcomic.ui.viewer.widgets.ScalableLazyColumn
+import com.bedlier.jbcomic.ui.viewer.widgets.ViewerPager
 import com.elvishew.xlog.XLog
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -109,13 +97,18 @@ fun ViewerScreen(
                     },
                     onLongClick = {})
         ) {
-            ViewerPager(imageViewModel = imageViewModel,
+            ViewerPager(
+                imageViewModel = imageViewModel,
                 singleMode = singleMode.value,
                 scrollFlow = scrollFlow,
                 onIndexChange = {
                     if (it == viewIndex.intValue) return@ViewerPager
                     viewIndex.intValue = it
-                })
+                },
+                onOpenMenu = {
+                    showMenu = !showMenu
+                }
+            )
         }
         AnimatedVisibility(
             visible = showMenu,
@@ -160,92 +153,6 @@ fun ViewerAppBar(
     }, title = { /*TODO*/ })
 }
 
-@Composable
-fun ViewerPager(
-    imageViewModel: ImageViewModel,
-    singleMode: Boolean,
-    scrollFlow: StateFlow<Int>,
-    onIndexChange: (index: Int) -> Unit
-) {
-    if (singleMode) {
-        HorizontalComicPager(
-            imageViewModel = imageViewModel, scrollFlow = scrollFlow, onIndexChange = onIndexChange
-        )
-    } else {
-        VerticalComicList(
-            imageViewModel = imageViewModel, scrollFlow = scrollFlow, onIndexChange = onIndexChange
-        )
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun HorizontalComicPager(
-    imageViewModel: ImageViewModel, scrollFlow: StateFlow<Int>, onIndexChange: (index: Int) -> Unit
-) {
-    val viewIndex = scrollFlow.collectAsState()
-    val state = rememberPagerState(
-        initialPage = viewIndex.value
-    ) {
-        imageViewModel.viewQueue.size
-    }
-    LaunchedEffect(Unit) {
-        scrollFlow.collectLatest {
-            if (it == state.currentPage) return@collectLatest
-            state.animateScrollToPage(it)
-        }
-    }
-    LaunchedEffect(key1 = state) {
-        snapshotFlow { state.currentPage }.collectLatest {
-            onIndexChange(it)
-        }
-    }
-    val images = imageViewModel.viewQueue
-    HorizontalPager(state = state, key = { images[it].id }) { index ->
-        val image = images[index]
-        Box(modifier = Modifier.fillMaxSize()) {
-            SubcomposeAsyncImage(
-                model = image.uri, contentDescription = image.name, loading = {
-                    CircularProgressIndicator()
-                }, modifier = Modifier.align(Alignment.Center).fillMaxWidth()
-            )
-        }
-    }
-}
-
-@Composable
-fun VerticalComicList(
-    imageViewModel: ImageViewModel, scrollFlow: StateFlow<Int>, onIndexChange: (index: Int) -> Unit
-) {
-    val viewIndex = scrollFlow.collectAsState()
-    val lazyListState =
-        rememberLazyListState(initialFirstVisibleItemIndex = viewIndex.value)
-    LaunchedEffect(Unit) {
-        snapshotFlow { lazyListState.firstVisibleItemIndex }.collect { index ->
-            onIndexChange(index)
-        }
-    }
-    LaunchedEffect(key1 = scrollFlow) {
-        scrollFlow.collectLatest {
-            if (it == lazyListState.firstVisibleItemIndex) return@collectLatest
-            lazyListState.animateScrollToItem(it)
-        }
-    }
-    val images = imageViewModel.viewQueue
-    ScalableLazyColumn(
-        lazyListState = lazyListState
-    ) {
-        scalableItems(images.size, key = { images[it].id }) { index: Int ->
-            val image = images[index]
-            SubcomposeAsyncImage(
-                model = image.uri, contentDescription = image.name, loading = {
-                    CircularProgressIndicator()
-                }, modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -256,7 +163,6 @@ fun ViewerBottomSheet(
     onModeClick: (singleMode: Boolean) -> Unit = {},
     onIndexChange: (index: Int) -> Unit = {}
 ) {
-
 
 
     Surface(
