@@ -6,9 +6,11 @@
     <string name="nav_destination_viewer">Viewer</string>
     <string name="message_no_permission">No permission to access storage</string>
     <string name="action_request_permission">Grant</string>
+    <string name="message_no_file">No file</string>
     <string name="menu_album_sort">Sort</string>
     <string name="button_confirm">Confirm</string>
     <string name="button_cancel">Cancel</string>
     <string name="button_back">Back</string>
     <string name="label_navigation">Navigation</string>
+    <string name="message_storage_permission">Storage permission is needed to access your files. Then the app can view photos in storage and extract/compress files.</string>
 </resources>

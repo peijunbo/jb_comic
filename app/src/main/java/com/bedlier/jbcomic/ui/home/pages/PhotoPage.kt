@@ -48,7 +48,6 @@ fun PhotoPage(
         LaunchedEffect(key1 = Unit) {
             imageViewModel.requestPermission(activity = activity) { _: MutableList<String>, allGranted: Boolean ->
                 if (allGranted) {
-                    imageViewModel.loadImageStore()
                     permissionGranted = true
                 }
             }
@@ -64,7 +63,6 @@ fun PhotoPage(
                         activity = currentActivity
                     ) { _: MutableList<String>, allGranted: Boolean ->
                         if (allGranted) {
-                            imageViewModel.loadImageStore()
                             permissionGranted = true
                         }
                     }

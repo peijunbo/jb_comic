@@ -32,6 +32,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -90,6 +91,7 @@ fun ViewerScreen(
                 .zIndex(1f)
                 .windowInsetsPadding(WindowInsets.safeContent)
         ) {
+            RadioButton(selected = true, onClick = { /*TODO*/ })
             ViewerPager(
                 imageViewModel = imageViewModel,
                 singleMode = singleMode.value,
@@ -169,7 +171,6 @@ fun ViewerBottomSheet(
             modifier = Modifier.fillMaxWidth()
         ) {
             BottomSheetDefaults.DragHandle(modifier = Modifier.align(Alignment.CenterHorizontally))
-
             Slider(
                 value = viewIndex.intValue.coerceAtLeast(0).toFloat(),
                 onValueChange = {
